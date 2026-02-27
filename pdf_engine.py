@@ -144,6 +144,7 @@ def generate_pdf(background, data, out="final.pdf"):
     table.append(["Загальна вартість", f'Загальна вартість пари обручок: {data["pair_total"]:.0f} ₴', "", "", ""])
 
     tbl = Table(table, colWidths=[48*mm, 30*mm, 28*mm, 28*mm, 36*mm])
+    tbl.hAlign = "CENTER"
 
     style = [
         ("GRID",(0,0),(-1,-1),0.4,colors.white),
@@ -197,6 +198,7 @@ def generate_pdf(background, data, out="final.pdf"):
         maxHeight=available_table_height,
         content=[tbl],
         mode="shrink",
+        hAlign="CENTER",
     )
 
     elements.append(fit_table)
