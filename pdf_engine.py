@@ -28,6 +28,18 @@ def row(label, w, m):
     return [[label, str(w), str(m)]]
 
 
+def append_pricing_rows(table, rows, ring_title):
+    table.append([ring_title, "", "", "", ""])
+    for r in rows:
+        table.append([
+            r["Товар/послуга"],
+            r["Ціна"],
+            r["К-сть"],
+            r["Знижка"],
+            r["Сума"],
+        ])
+
+
 def generate_pdf(background, data, out="final.pdf"):
 
     doc = SimpleDocTemplate(
@@ -107,45 +119,29 @@ def generate_pdf(background, data, out="final.pdf"):
 
     table = []
 
-    table.append(["ПАРАМЕТРИ","ЖІНОЧА","ЧОЛОВІЧА"])
+    table.append(["ПАРАМЕТРИ","ЖІНОЧА","ЧОЛОВІЧА", "", ""])
+    table += [["Розмір",data["w_size"],data["m_size"], "", ""]]
+    table += [["Ширина",data["w_width"],data["m_width"], "", ""]]
+    table += [["Товщина",data["w_thickness"],data["m_thickness"], "", ""]]
 
-    table += row("Розмір",data["w_size"],data["m_size"])
-    table += row("Ширина",data["w_width"],data["m_width"])
-    table += row("Товщина",data["w_thickness"],data["m_thickness"])
+    table.append(["ЦІНОУТВОРЕННЯ", "", "", "", ""])
+    table.append(["Товар/послуга", "Ціна", "К-сть", "Знижка", "Вартість"])
 
-    table += section("ЦІНОУТВОРЕННЯ")
-    table += row("Метал",data["w_metal"],data["m_metal"])
-    table += row("Вага (г)",data["w_weight"],data["m_weight"])
+    append_pricing_rows(table, data["w_pricing_rows"], "Жіноча")
+    append_pricing_rows(table, data["m_pricing_rows"], "Чоловіча")
 
-    if data["w_stones"] or data["m_stones"]:
-        table += section("КАМІНЦІ")
-        table += row("Тип каменю",data["w_stones"],data["m_stones"])
-
-    if data["w_profile"] or data["m_profile"]:
-        table += section("ДОДАТКОВІ ПОСЛУГИ")
-        table += row("Профіль",data["w_profile"],data["m_profile"])
-
-    if data["w_engraving"] or data["m_engraving"]:
-        table += row("Гравіювання",data["w_engraving"],data["m_engraving"])
-
-    if data["w_coating"] or data["m_coating"]:
-        table += row("Покриття",data["w_coating"],data["m_coating"])
-
-    if data["w_combo"] or data["m_combo"]:
-        table += row("Поєднання кольорів",data["w_combo"],data["m_combo"])
-
-    table += section("ЗАГАЛЬНА ВАРТІСТЬ")
+    table.append(["ЗАГАЛЬНА ВАРТІСТЬ", "", "", "", ""])
 
     idx_w = len(table)
-    table.append(["Жіноча", f'{data["w_total"]:.0f} ₴', ""])
+    table.append(["Жіноча", "", "", "", f'{data["w_total"]:.0f} ₴'])
 
     idx_m = len(table)
-    table.append(["Чоловіча", f'{data["m_total"]:.0f} ₴', ""])
+    table.append(["Чоловіча", "", "", "", f'{data["m_total"]:.0f} ₴'])
 
     idx_pair = len(table)
-    table.append(["Ціна за пару", f'{data["pair_total"]:.0f} ₴', ""])
+    table.append(["Ціна за пару", "", "", "", f'{data["pair_total"]:.0f} ₴'])
 
-    tbl = Table(table, colWidths=[60*mm,55*mm,55*mm])
+    tbl = Table(table, colWidths=[48*mm,30*mm,28*mm,28*mm,36*mm])
 
     style = [
         ("GRID",(0,0),(-1,-1),0.4,colors.white),
@@ -160,16 +156,23 @@ def generate_pdf(background, data, out="final.pdf"):
     ]
 
     for i,r in enumerate(table):
-        if r[1]=="" and r[2]=="":
+        if r[1]=="" and r[2]=="" and r[3]=="" and r[4]=="":
             style.append(("SPAN",(0,i),(-1,i)))
             style.append(("BACKGROUND",(0,i),(-1,i),colors.HexColor("#3b4158")))
             style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
 
+    pricing_header_idx = None
+    for i, r in enumerate(table):
+        if r[0] == "Товар/послуга":
+            pricing_header_idx = i
+            break
+    if pricing_header_idx is not None:
+        style.append(("BACKGROUND", (0, pricing_header_idx), (-1, pricing_header_idx), colors.HexColor("#4d556f")))
+        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 10))
+
     style += [
-        ("SPAN",(1,idx_w),(2,idx_w)),
-        ("SPAN",(1,idx_m),(2,idx_m)),
-        ("SPAN",(1,idx_pair),(2,idx_pair)),
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",12),
+        ("ALIGN",(4,1),(4,-1),"RIGHT"),
     ]
 
     tbl.setStyle(TableStyle(style))
