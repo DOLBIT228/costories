@@ -30,6 +30,7 @@ def row(label, w, m):
 
 def append_pricing_rows(table, rows, ring_title):
     table.append([ring_title, "", "", "", ""])
+    table.append(["Товар/послуга", "Ціна", "К-сть", "Знижка", "Вартість"])
     for r in rows:
         table.append([
             r["Товар/послуга"],
@@ -119,13 +120,13 @@ def generate_pdf(background, data, out="final.pdf"):
 
     table = []
 
-    table.append(["ПАРАМЕТРИ","ЖІНОЧА","ЧОЛОВІЧА", "", ""])
-    table += [["Розмір",data["w_size"],data["m_size"], "", ""]]
-    table += [["Ширина",data["w_width"],data["m_width"], "", ""]]
-    table += [["Товщина",data["w_thickness"],data["m_thickness"], "", ""]]
+    table.append(["ПАРАМЕТРИ", "Жіноча", "", "Чоловіча", ""])
+    table += [["Розмір", data["w_size"], "", data["m_size"], ""]]
+    table += [["Ширина", data["w_width"], "", data["m_width"], ""]]
+    table += [["Товщина", data["w_thickness"], "", data["m_thickness"], ""]]
+    table += [["Вага", f'{data["w_weight"]:.2f} г', "", f'{data["m_weight"]:.2f} г', ""]]
 
     table.append(["ЦІНОУТВОРЕННЯ", "", "", "", ""])
-    table.append(["Товар/послуга", "Ціна", "К-сть", "Знижка", "Вартість"])
 
     append_pricing_rows(table, data["w_pricing_rows"], "Жіноча")
     append_pricing_rows(table, data["m_pricing_rows"], "Чоловіча")
@@ -133,13 +134,13 @@ def generate_pdf(background, data, out="final.pdf"):
     table.append(["ЗАГАЛЬНА ВАРТІСТЬ", "", "", "", ""])
 
     idx_w = len(table)
-    table.append(["Жіноча", "", "", "", f'{data["w_total"]:.0f} ₴'])
+    table.append(["Жіноча", f'Загальна вартість жіночої обручки: {data["w_total"]:.0f} ₴', "", "", ""])
 
     idx_m = len(table)
-    table.append(["Чоловіча", "", "", "", f'{data["m_total"]:.0f} ₴'])
+    table.append(["Чоловіча", f'Загальна вартість чоловічої обручки: {data["m_total"]:.0f} ₴', "", "", ""])
 
     idx_pair = len(table)
-    table.append(["Ціна за пару", "", "", "", f'{data["pair_total"]:.0f} ₴'])
+    table.append(["Загальна вартість", f'Загальна вартість пари обручок: {data["pair_total"]:.0f} ₴', "", "", ""])
 
     tbl = Table(table, colWidths=[48*mm,30*mm,28*mm,28*mm,36*mm])
 
@@ -153,6 +154,19 @@ def generate_pdf(background, data, out="final.pdf"):
 
         ("FONT",(0,1),(-1,-1),"Montserrat",10),
         ("TEXTCOLOR",(0,0),(-1,-1),colors.white),
+        ("SPAN", (1, 0), (2, 0)),
+        ("SPAN", (3, 0), (4, 0)),
+        ("SPAN", (1, 1), (2, 1)),
+        ("SPAN", (3, 1), (4, 1)),
+        ("SPAN", (1, 2), (2, 2)),
+        ("SPAN", (3, 2), (4, 2)),
+        ("SPAN", (1, 3), (2, 3)),
+        ("SPAN", (3, 3), (4, 3)),
+        ("SPAN", (1, 4), (2, 4)),
+        ("SPAN", (3, 4), (4, 4)),
+        ("SPAN", (1, idx_w), (4, idx_w)),
+        ("SPAN", (1, idx_m), (4, idx_m)),
+        ("SPAN", (1, idx_pair), (4, idx_pair)),
     ]
 
     for i,r in enumerate(table):
@@ -161,18 +175,15 @@ def generate_pdf(background, data, out="final.pdf"):
             style.append(("BACKGROUND",(0,i),(-1,i),colors.HexColor("#3b4158")))
             style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
 
-    pricing_header_idx = None
-    for i, r in enumerate(table):
-        if r[0] == "Товар/послуга":
-            pricing_header_idx = i
-            break
-    if pricing_header_idx is not None:
+    pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
+    for pricing_header_idx in pricing_header_indexes:
         style.append(("BACKGROUND", (0, pricing_header_idx), (-1, pricing_header_idx), colors.HexColor("#4d556f")))
-        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 10))
+        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "Montserrat", 8))
 
     style += [
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",12),
-        ("ALIGN",(4,1),(4,-1),"RIGHT"),
+        ("FONT", (1, idx_w), (4, idx_pair), "MontserratBold", 10),
+        ("ALIGN",(1,idx_w),(4,idx_pair),"RIGHT"),
     ]
 
     tbl.setStyle(TableStyle(style))
