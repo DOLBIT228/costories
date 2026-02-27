@@ -1,12 +1,40 @@
 import streamlit as st
 import pandas as pd
 import requests
+from pathlib import Path
+import shutil
 from database import get_conn, init_db, STONE_SIZES, STONE_TYPES
 from pdf_engine import generate_pdf
-from tempfile import NamedTemporaryFile
+
 
 init_db()
 conn = get_conn()
+
+ASSETS_DIR = Path("assets")
+BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
+BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def list_background_files():
+    allowed = {".png", ".jpg", ".jpeg"}
+    files = sorted([f.name for f in BACKGROUNDS_DIR.iterdir() if f.is_file() and f.suffix.lower() in allowed])
+
+    legacy = Path("background.png")
+    if legacy.exists() and "background.png" not in files:
+        files.insert(0, "background.png")
+
+    return files
+
+
+def get_background_path(filename):
+    if filename == "background.png":
+        return "background.png"
+
+    candidate = BACKGROUNDS_DIR / filename
+    if candidate.exists():
+        return str(candidate)
+
+    return "background.png"
 
 st.set_page_config(layout="wide")
 st.title("💍 Кошторис обручок")
@@ -41,7 +69,9 @@ with tab2:
 
     st.subheader("Курс USD")
 
-    usd = pd.read_sql("SELECT usd FROM settings WHERE id=1",conn).iloc[0][0]
+    settings = pd.read_sql("SELECT usd, background_file FROM settings WHERE id=1",conn).iloc[0]
+    usd = settings["usd"]
+    selected_background = settings["background_file"]
     new_usd = st.number_input("USD → UAH",value=float(usd))
 
     if st.button("Зберегти курс"):
@@ -55,6 +85,45 @@ with tab2:
         conn.commit()
         st.success(f"Оновлено: {rate}")
 
+    st.subheader("Фони для PDF")
+
+    uploaded_backgrounds = st.file_uploader(
+        "Завантажити фони (PNG/JPG)",
+        type=["png", "jpg", "jpeg"],
+        accept_multiple_files=True,
+        key="background_uploads",
+    )
+
+    if st.button("Зберегти фони"):
+        if uploaded_backgrounds:
+            saved = 0
+            for bg in uploaded_backgrounds:
+                safe_name = Path(bg.name).name
+                target = BACKGROUNDS_DIR / safe_name
+                with target.open("wb") as f:
+                    shutil.copyfileobj(bg, f)
+                saved += 1
+            st.success(f"Збережено фонів: {saved}")
+        else:
+            st.info("Спочатку оберіть хоча б один файл.")
+
+    backgrounds = list_background_files()
+    current_background = pd.read_sql("SELECT background_file FROM settings WHERE id=1", conn).iloc[0]["background_file"]
+    if current_background not in backgrounds:
+        current_background = backgrounds[0] if backgrounds else "background.png"
+
+    selected_background = st.selectbox(
+        "Фон для формування PDF",
+        options=backgrounds if backgrounds else ["background.png"],
+        index=(backgrounds.index(current_background) if backgrounds else 0),
+        key="selected_background",
+    )
+
+    if st.button("Зберегти фон для PDF"):
+        conn.execute("UPDATE settings SET background_file=? WHERE id=1", (selected_background,))
+        conn.commit()
+        st.success(f"Активний фон: {selected_background}")
+
 # ================= MANAGER =================
 with tab1:
 
@@ -64,7 +133,9 @@ with tab1:
     profiles = pd.read_sql("SELECT * FROM profiles",conn)
     engr = pd.read_sql("SELECT * FROM engravings",conn)
     coat = pd.read_sql("SELECT * FROM coatings",conn)
-    usd = pd.read_sql("SELECT usd FROM settings WHERE id=1",conn).iloc[0][0]
+    settings = pd.read_sql("SELECT usd, background_file FROM settings WHERE id=1",conn).iloc[0]
+    usd = settings["usd"]
+    selected_background = settings["background_file"]
 
     col1,col2 = st.columns(2)
 
@@ -252,7 +323,7 @@ with tab1:
             "m_combo":man["combo"]
         }
 
-        out = generate_pdf("background.png",data)
+        out = generate_pdf(get_background_path(selected_background),data)
 
         with open(out,"rb") as f:
             st.download_button("⬇️ Завантажити PDF",f,file_name="koshtorys.pdf")
