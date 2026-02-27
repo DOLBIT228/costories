@@ -135,13 +135,13 @@ def generate_pdf(background, data, out="final.pdf"):
     table.append(["ЗАГАЛЬНА ВАРТІСТЬ", "", "", "", ""])
 
     idx_w = len(table)
-    table.append(["Жіноча", f'Загальна вартість жіночої обручки: {data["w_total"]:.0f} ₴', "", "", ""])
+    table.append(["Жіноча", f'{data["w_total"]:.0f} ₴', "", "", ""])
 
     idx_m = len(table)
-    table.append(["Чоловіча", f'Загальна вартість чоловічої обручки: {data["m_total"]:.0f} ₴', "", "", ""])
+    table.append(["Чоловіча", f'{data["m_total"]:.0f} ₴', "", "", ""])
 
     idx_pair = len(table)
-    table.append(["Загальна вартість", f'Загальна вартість пари обручок: {data["pair_total"]:.0f} ₴', "", "", ""])
+    table.append(["Загальна вартість", f'{data["pair_total"]:.0f} ₴', "", "", ""])
 
     tbl = Table(table, colWidths=[48*mm, 30*mm, 28*mm, 28*mm, 36*mm])
     tbl.hAlign = "CENTER"
@@ -187,7 +187,7 @@ def generate_pdf(background, data, out="final.pdf"):
     style += [
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
         ("FONT", (1, idx_w), (4, idx_pair), "MontserratBold", 9),
-        ("ALIGN",(1,idx_w),(4,idx_pair),"RIGHT"),
+        ("ALIGN", (1, idx_w), (4, idx_pair), "CENTER"),
     ]
 
     tbl.setStyle(TableStyle(style))
