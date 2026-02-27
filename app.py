@@ -85,15 +85,14 @@ with tab1:
         metal_price = float(metals[metals.name == metal].price.values[0])
         jeweler_price = float(jeweler[jeweler.type == jew].price.values[0])
 
-        st.markdown("#### Знижки менеджера (%)")
+        st.markdown("#### Знижки менеджера")
         d1, d2 = st.columns(2)
         with d1:
             metal_discount = st.number_input(
-                "Знижка на метали %",
+                "Знижка на метали ₴/г",
                 min_value=0.0,
-                max_value=100.0,
                 value=0.0,
-                step=1.0,
+                step=10.0,
                 key=f"{prefix}dm",
             )
             profile_discount = st.number_input(
@@ -124,23 +123,31 @@ with tab1:
 
         pricing_rows = []
 
-        def add_row(category, item, unit_price, qty, discount, unit):
+        def add_row(category, item, unit_price, qty, discount, unit, discount_type="percent"):
             base = unit_price * qty
-            final = base * (1 - discount / 100)
+
+            if discount_type == "per_unit":
+                discounted_unit_price = max(unit_price - discount, 0)
+                final = discounted_unit_price * qty
+                discount_label = f"-{discount:.0f} ₴/{unit}"
+            else:
+                final = base * (1 - discount / 100)
+                discount_label = f"{discount:.0f}%"
+
             pricing_rows.append(
                 {
                     "Категорія": category,
                     "Товар/послуга": item,
                     "Ціна": f"{unit_price:.0f} ₴",
                     "К-сть": f"{qty:.2f} {unit}",
-                    "Знижка": f"{discount:.0f}%",
+                    "Знижка": discount_label,
                     "Сума": f"{final:.0f} ₴",
                 }
             )
             return final
 
         total = 0.0
-        total += add_row("Метал", metal, metal_price, weight, metal_discount, "г")
+        total += add_row("Метал", metal, metal_price, weight, metal_discount, "г", "per_unit")
         total += add_row("Робота ювеліра", jew, jeweler_price, weight, jeweler_discount, "г")
 
         stones_txt = profile_txt = engr_txt = coat_txt = combo_txt = ""
