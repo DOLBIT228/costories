@@ -82,10 +82,66 @@ with tab1:
         metal = st.selectbox("Метал",metals.name,key=f"{prefix}m")
         jew = st.selectbox("Тип роботи",jeweler.type,key=f"{prefix}j")
 
-        total = (
-            weight * metals[metals.name==metal].price.values[0] +
-            weight * jeweler[jeweler.type==jew].price.values[0]
-        )
+        metal_price = float(metals[metals.name == metal].price.values[0])
+        jeweler_price = float(jeweler[jeweler.type == jew].price.values[0])
+
+        st.markdown("#### Знижки менеджера (%)")
+        d1, d2 = st.columns(2)
+        with d1:
+            metal_discount = st.number_input(
+                "Знижка на метали %",
+                min_value=0.0,
+                max_value=100.0,
+                value=0.0,
+                step=1.0,
+                key=f"{prefix}dm",
+            )
+            profile_discount = st.number_input(
+                "Знижка на профіль %",
+                min_value=0.0,
+                max_value=100.0,
+                value=0.0,
+                step=1.0,
+                key=f"{prefix}dp",
+            )
+        with d2:
+            jeweler_discount = st.number_input(
+                "Знижка на роботу ювелірів %",
+                min_value=0.0,
+                max_value=100.0,
+                value=0.0,
+                step=1.0,
+                key=f"{prefix}dj",
+            )
+            engraving_discount = st.number_input(
+                "Знижка на гравіювання %",
+                min_value=0.0,
+                max_value=100.0,
+                value=0.0,
+                step=1.0,
+                key=f"{prefix}de",
+            )
+
+        pricing_rows = []
+
+        def add_row(category, item, unit_price, qty, discount, unit):
+            base = unit_price * qty
+            final = base * (1 - discount / 100)
+            pricing_rows.append(
+                {
+                    "Категорія": category,
+                    "Товар/послуга": item,
+                    "Ціна": f"{unit_price:.0f} ₴",
+                    "К-сть": f"{qty:.2f} {unit}",
+                    "Знижка": f"{discount:.0f}%",
+                    "Сума": f"{final:.0f} ₴",
+                }
+            )
+            return final
+
+        total = 0.0
+        total += add_row("Метал", metal, metal_price, weight, metal_discount, "г")
+        total += add_row("Робота ювеліра", jew, jeweler_price, weight, jeweler_discount, "г")
 
         stones_txt = profile_txt = engr_txt = coat_txt = combo_txt = ""
 
@@ -95,28 +151,36 @@ with tab1:
             q = st.number_input("Кількість",0,key=f"{prefix}kq")
 
             usd_price = stones[stones["size"]==sz][t].values[0]
-            total += usd_price * usd * q
+            stone_price = float(usd_price * usd)
+            total += add_row("Каміння", f"{t} {sz}мм", stone_price, q, 0.0, "шт")
             stones_txt = f"{t} {sz}мм x{q}"
 
         if st.checkbox("Профіль",key=f"{prefix}p"):
             p = st.selectbox("Тип",profiles.name,key=f"{prefix}pp")
-            total += profiles[profiles.name==p].price.values[0]
+            profile_price = float(profiles[profiles.name == p].price.values[0])
+            total += add_row("Профіль", p, profile_price, 1, profile_discount, "шт")
             profile_txt = p
 
         if st.checkbox("Гравіювання",key=f"{prefix}e"):
             e = st.selectbox("Тип",engr.name,key=f"{prefix}ee")
-            total += engr[engr.name==e].price.values[0]
+            engraving_price = float(engr[engr.name == e].price.values[0])
+            total += add_row("Гравіювання", e, engraving_price, 1, engraving_discount, "шт")
             engr_txt = e
 
         if st.checkbox("Покриття",key=f"{prefix}c"):
             c = st.selectbox("Тип",coat.name,key=f"{prefix}cc")
-            total += coat[coat.name==c].price.values[0]
+            coating_price = float(coat[coat.name == c].price.values[0])
+            total += add_row("Покриття", c, coating_price, 1, 0.0, "шт")
             coat_txt = c
 
         if st.checkbox("Поєднання кольорів",key=f"{prefix}x"):
             cx = st.number_input("Сума ₴",0.0,key=f"{prefix}xx")
-            total += cx
+            total += add_row("Поєднання кольорів", "Додаткова послуга", cx, 1, 0.0, "шт")
             combo_txt = f"{cx:.0f} ₴"
+
+        if pricing_rows:
+            st.markdown("#### Ціноутворення")
+            st.dataframe(pd.DataFrame(pricing_rows), use_container_width=True, hide_index=True)
 
         st.markdown(f"### 💰 {total:.2f} ₴")
 
@@ -127,6 +191,7 @@ with tab1:
             "metal":metal,
             "weight":weight,
             "total":total,
+            "pricing_rows":pricing_rows,
             "stones":stones_txt,
             "profile":profile_txt,
             "engraving":engr_txt,
@@ -161,6 +226,8 @@ with tab1:
             "m_metal":man["metal"],
             "w_weight":woman["weight"],
             "m_weight":man["weight"],
+            "w_pricing_rows":woman["pricing_rows"],
+            "m_pricing_rows":man["pricing_rows"],
 
             "w_total":woman["total"],
             "m_total":man["total"],
