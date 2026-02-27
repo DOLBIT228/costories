@@ -1,5 +1,5 @@
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer
+from reportlab.platypus import KeepInFrame, SimpleDocTemplate, Spacer, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -116,7 +116,8 @@ def generate_pdf(background, data, out="final.pdf"):
             rounded(photos[1], start_x + PHOTO_W + GAP, photo_y)
 
     # таблиця завжди під фото
-    elements.append(Spacer(1, 95*mm))
+    table_top_offset = 95 * mm
+    elements.append(Spacer(1, table_top_offset))
 
     table = []
 
@@ -142,17 +143,19 @@ def generate_pdf(background, data, out="final.pdf"):
     idx_pair = len(table)
     table.append(["Загальна вартість", f'Загальна вартість пари обручок: {data["pair_total"]:.0f} ₴', "", "", ""])
 
-    tbl = Table(table, colWidths=[48*mm,30*mm,28*mm,28*mm,36*mm])
+    tbl = Table(table, colWidths=[48*mm, 30*mm, 28*mm, 28*mm, 36*mm])
 
     style = [
         ("GRID",(0,0),(-1,-1),0.4,colors.white),
         ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#2b3149")),
-        ("FONT",(0,0),(-1,0),"MontserratBold",11),
+        ("FONT",(0,0),(-1,0),"MontserratBold",10),
 
         ("ALIGN",(0,0),(-1,-1),"CENTER"),
         ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
 
-        ("FONT",(0,1),(-1,-1),"Montserrat",10),
+        ("FONT",(0,1),(-1,-1),"Montserrat",9),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ("TEXTCOLOR",(0,0),(-1,-1),colors.white),
         ("SPAN", (1, 0), (2, 0)),
         ("SPAN", (3, 0), (4, 0)),
@@ -173,22 +176,30 @@ def generate_pdf(background, data, out="final.pdf"):
         if r[1]=="" and r[2]=="" and r[3]=="" and r[4]=="":
             style.append(("SPAN",(0,i),(-1,i)))
             style.append(("BACKGROUND",(0,i),(-1,i),colors.HexColor("#3b4158")))
-            style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
+            style.append(("FONT",(0,i),(-1,i),"MontserratBold",10))
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
         style.append(("BACKGROUND", (0, pricing_header_idx), (-1, pricing_header_idx), colors.HexColor("#4d556f")))
-        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "Montserrat", 8))
+        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "Montserrat", 7))
 
     style += [
-        ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",12),
-        ("FONT", (1, idx_w), (4, idx_pair), "MontserratBold", 10),
+        ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
+        ("FONT", (1, idx_w), (4, idx_pair), "MontserratBold", 9),
         ("ALIGN",(1,idx_w),(4,idx_pair),"RIGHT"),
     ]
 
     tbl.setStyle(TableStyle(style))
 
-    elements.append(tbl)
+    available_table_height = doc.height - table_top_offset
+    fit_table = KeepInFrame(
+        maxWidth=doc.width,
+        maxHeight=available_table_height,
+        content=[tbl],
+        mode="shrink",
+    )
+
+    elements.append(fit_table)
 
     doc.build(elements, onFirstPage=draw_bg)
 
