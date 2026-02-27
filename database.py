@@ -49,10 +49,17 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS settings(
         id INTEGER PRIMARY KEY,
-        usd REAL DEFAULT 40
+        usd REAL DEFAULT 40,
+        background_file TEXT DEFAULT 'background.png'
     )
     """)
-    cur.execute("INSERT OR IGNORE INTO settings VALUES(1,40)")
+
+    settings_cols = [row[1] for row in cur.execute("PRAGMA table_info(settings)")]
+    if "background_file" not in settings_cols:
+        cur.execute("ALTER TABLE settings ADD COLUMN background_file TEXT DEFAULT 'background.png'")
+
+    cur.execute("INSERT OR IGNORE INTO settings(id, usd, background_file) VALUES(1,40,'background.png')")
+    cur.execute("UPDATE settings SET background_file='background.png' WHERE background_file IS NULL OR background_file=''")
 
     # stones in USD
     cur.execute("""
