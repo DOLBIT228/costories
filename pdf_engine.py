@@ -174,17 +174,17 @@ def generate_pdf(background, data, out="final.pdf"):
     tbl.hAlign = "CENTER"
 
     style = [
-        ("GRID",(0,0),(-1,-1),0.4,colors.white),
-        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#2b3149")),
-        ("FONT",(0,0),(-1,0),"MontserratBold",10),
-
-        ("ALIGN",(0,0),(-1,-1),"CENTER"),
-        ("VALIGN",(0,0),(-1,-1),"MIDDLE"),
-
-        ("FONT",(0,1),(-1,-1),"Montserrat",9),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("TEXTCOLOR",(0,0),(-1,-1),colors.white),
+        ("FONT", (0, 0), (-1, -1), "Montserrat", 9),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#0f1115")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("ALIGN", (1, 0), (-1, -1), "LEFT"),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
+        ("ALIGN", (1, 0), (-1, 0), "CENTER"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+        ("LINEBELOW", (0, 0), (-1, 0), 1, colors.HexColor("#111111")),
         ("SPAN", (1, 0), (2, 0)),
         ("SPAN", (3, 0), (4, 0)),
         ("SPAN", (1, 1), (2, 1)),
@@ -198,23 +198,27 @@ def generate_pdf(background, data, out="final.pdf"):
         ("SPAN", (1, idx_w), (4, idx_w)),
         ("SPAN", (1, idx_m), (4, idx_m)),
         ("SPAN", (1, idx_pair), (4, idx_pair)),
+        ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#b8bcc4")),
     ]
 
     for i,r in enumerate(table):
         if r[1]=="" and r[2]=="" and r[3]=="" and r[4]=="":
             style.append(("SPAN",(0,i),(-1,i)))
-            style.append(("BACKGROUND",(0,i),(-1,i),colors.HexColor("#3b4158")))
-            style.append(("FONT",(0,i),(-1,i),"MontserratBold",10))
+            style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
+            style.append(("TOPPADDING", (0, i), (-1, i), 8))
+            style.append(("BOTTOMPADDING", (0, i), (-1, i), 5))
+            style.append(("LINEBELOW", (0, i), (-1, i), 1, colors.HexColor("#111111")))
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
-        style.append(("BACKGROUND", (0, pricing_header_idx), (-1, pricing_header_idx), colors.HexColor("#4d556f")))
-        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "Montserrat", 7))
+        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 8))
+        style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), colors.HexColor("#4c515a")))
+        style.append(("LINEABOVE", (0, pricing_header_idx), (-1, pricing_header_idx), 0.8, colors.HexColor("#111111")))
 
     style += [
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
         ("FONT", (1, idx_w), (4, idx_pair), "MontserratBold", 9),
-        ("ALIGN", (1, idx_w), (4, idx_pair), "CENTER"),
+        ("ALIGN", (1, idx_w), (4, idx_pair), "LEFT"),
     ]
 
     tbl.setStyle(TableStyle(style))
