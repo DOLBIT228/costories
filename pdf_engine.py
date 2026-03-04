@@ -41,6 +41,12 @@ def append_pricing_rows(table, rows, ring_title):
         ])
 
 
+def append_split_row_line(style, row_idx, line_type, thickness, color):
+    style.append((line_type, (0, row_idx), (0, row_idx), thickness, color))
+    style.append((line_type, (1, row_idx), (2, row_idx), thickness, color))
+    style.append((line_type, (3, row_idx), (4, row_idx), thickness, color))
+
+
 def draw_footer(canvas_obj, doc, data):
     couple_names = data.get("couple_names")
     agreement_number = data.get("agreement_number")
@@ -185,7 +191,6 @@ def generate_pdf(background, data, out="final.pdf"):
         ("ALIGN", (1, 0), (-1, 0), "CENTER"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("LINEBELOW", (0, 0), (-1, 0), 1, colors.HexColor("#8a919e")),
         ("SPAN", (1, 0), (2, 0)),
         ("SPAN", (3, 0), (4, 0)),
         ("SPAN", (1, 1), (2, 1)),
@@ -199,8 +204,12 @@ def generate_pdf(background, data, out="final.pdf"):
         ("SPAN", (1, idx_w), (4, idx_w)),
         ("SPAN", (1, idx_m), (4, idx_m)),
         ("SPAN", (1, idx_pair), (4, idx_pair)),
-        ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#8a919e")),
     ]
+
+    append_split_row_line(style, 0, "LINEBELOW", 1, colors.HexColor("#8a919e"))
+
+    for row_idx in range(1, len(table)):
+        append_split_row_line(style, row_idx, "LINEBELOW", 0.3, colors.HexColor("#8a919e"))
 
     for i,r in enumerate(table):
         if r[1]=="" and r[2]=="" and r[3]=="" and r[4]=="":
@@ -209,13 +218,13 @@ def generate_pdf(background, data, out="final.pdf"):
             style.append(("TEXTCOLOR", (0, i), (-1, i), colors.white))
             style.append(("TOPPADDING", (0, i), (-1, i), 8))
             style.append(("BOTTOMPADDING", (0, i), (-1, i), 5))
-            style.append(("LINEBELOW", (0, i), (-1, i), 1, colors.HexColor("#8a919e")))
+            append_split_row_line(style, i, "LINEBELOW", 1, colors.HexColor("#8a919e"))
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
         style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 8))
         style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), colors.white))
-        style.append(("LINEABOVE", (0, pricing_header_idx), (-1, pricing_header_idx), 0.8, colors.HexColor("#8a919e")))
+        append_split_row_line(style, pricing_header_idx, "LINEABOVE", 0.8, colors.HexColor("#8a919e"))
 
     style += [
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
