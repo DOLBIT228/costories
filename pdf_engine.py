@@ -152,13 +152,46 @@ def generate_pdf(background, data, out="final.pdf"):
     table_top_offset = 95 * mm
     elements.append(Spacer(1, table_top_offset))
 
-    table = []
+    params_table = [
+        ["ПАРАМЕТРИ", "", "Жіноча", "", "Чоловіча"],
+        ["Розмір", "", data["w_size"], "", data["m_size"]],
+        ["Ширина", "", data["w_width"], "", data["m_width"]],
+        ["Товщина", "", data["w_thickness"], "", data["m_thickness"]],
+        ["Вага", "", f'{data["w_weight"]:.2f} г', "", f'{data["m_weight"]:.2f} г'],
+    ]
 
-    table.append(["ПАРАМЕТРИ", "Жіноча", "", "Чоловіча", ""])
-    table += [["Розмір", data["w_size"], "", data["m_size"], ""]]
-    table += [["Ширина", data["w_width"], "", data["m_width"], ""]]
-    table += [["Товщина", data["w_thickness"], "", data["m_thickness"], ""]]
-    table += [["Вага", f'{data["w_weight"]:.2f} г', "", f'{data["m_weight"]:.2f} г', ""]]
+    params_tbl = Table(params_table, colWidths=[58*mm, 4*mm, 52*mm, 4*mm, 52*mm])
+    params_tbl.hAlign = "CENTER"
+
+    params_style = [
+        ("FONT", (0, 0), (-1, -1), "Montserrat", 9),
+        ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#d9dee7")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("ALIGN", (2, 0), (4, -1), "LEFT"),
+        ("ALIGN", (2, 0), (4, 0), "CENTER"),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+        ("LEFTPADDING", (1, 0), (1, -1), 0),
+        ("RIGHTPADDING", (1, 0), (1, -1), 0),
+        ("LEFTPADDING", (3, 0), (3, -1), 0),
+        ("RIGHTPADDING", (3, 0), (3, -1), 0),
+        ("LINEBELOW", (0, 0), (0, 0), 1, colors.HexColor("#8a919e")),
+        ("LINEBELOW", (2, 0), (2, 0), 1, colors.HexColor("#8a919e")),
+        ("LINEBELOW", (4, 0), (4, 0), 1, colors.HexColor("#8a919e")),
+    ]
+
+    for row_idx in range(1, len(params_table)):
+        params_style.append(("LINEBELOW", (0, row_idx), (0, row_idx), 0.3, colors.HexColor("#8a919e")))
+        params_style.append(("LINEBELOW", (2, row_idx), (2, row_idx), 0.3, colors.HexColor("#8a919e")))
+        params_style.append(("LINEBELOW", (4, row_idx), (4, row_idx), 0.3, colors.HexColor("#8a919e")))
+
+    params_tbl.setStyle(TableStyle(params_style))
+
+    table = []
 
     table.append(["ЦІНОУТВОРЕННЯ", "", "", "", ""])
 
@@ -176,7 +209,7 @@ def generate_pdf(background, data, out="final.pdf"):
     idx_pair = len(table)
     table.append(["Загальна вартість", f'{data["pair_total"]:.0f} ₴', "", "", ""])
 
-    tbl = Table(table, colWidths=[48*mm, 30*mm, 28*mm, 28*mm, 36*mm])
+    tbl = Table(table, colWidths=[56*mm, 26*mm, 22*mm, 22*mm, 34*mm])
     tbl.hAlign = "CENTER"
 
     style = [
@@ -243,6 +276,8 @@ def generate_pdf(background, data, out="final.pdf"):
         hAlign="CENTER",
     )
 
+    elements.append(params_tbl)
+    elements.append(Spacer(1, 8))
     elements.append(fit_table)
 
     def draw_first_page(canvas_obj, page_doc):
