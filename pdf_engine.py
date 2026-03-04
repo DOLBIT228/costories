@@ -175,7 +175,7 @@ def generate_pdf(background, data, out="final.pdf"):
 
     style = [
         ("FONT", (0, 0), (-1, -1), "Montserrat", 9),
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#0f1115")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#d9dee7")),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("ALIGN", (1, 0), (-1, -1), "LEFT"),
@@ -184,7 +184,8 @@ def generate_pdf(background, data, out="final.pdf"):
         ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
         ("ALIGN", (1, 0), (-1, 0), "CENTER"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
-        ("LINEBELOW", (0, 0), (-1, 0), 1, colors.HexColor("#111111")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("LINEBELOW", (0, 0), (-1, 0), 1, colors.HexColor("#8a919e")),
         ("SPAN", (1, 0), (2, 0)),
         ("SPAN", (3, 0), (4, 0)),
         ("SPAN", (1, 1), (2, 1)),
@@ -198,22 +199,23 @@ def generate_pdf(background, data, out="final.pdf"):
         ("SPAN", (1, idx_w), (4, idx_w)),
         ("SPAN", (1, idx_m), (4, idx_m)),
         ("SPAN", (1, idx_pair), (4, idx_pair)),
-        ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#b8bcc4")),
+        ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#8a919e")),
     ]
 
     for i,r in enumerate(table):
         if r[1]=="" and r[2]=="" and r[3]=="" and r[4]=="":
             style.append(("SPAN",(0,i),(-1,i)))
             style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
+            style.append(("TEXTCOLOR", (0, i), (-1, i), colors.white))
             style.append(("TOPPADDING", (0, i), (-1, i), 8))
             style.append(("BOTTOMPADDING", (0, i), (-1, i), 5))
-            style.append(("LINEBELOW", (0, i), (-1, i), 1, colors.HexColor("#111111")))
+            style.append(("LINEBELOW", (0, i), (-1, i), 1, colors.HexColor("#8a919e")))
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
         style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 8))
-        style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), colors.HexColor("#4c515a")))
-        style.append(("LINEABOVE", (0, pricing_header_idx), (-1, pricing_header_idx), 0.8, colors.HexColor("#111111")))
+        style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), colors.white))
+        style.append(("LINEABOVE", (0, pricing_header_idx), (-1, pricing_header_idx), 0.8, colors.HexColor("#8a919e")))
 
     style += [
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
