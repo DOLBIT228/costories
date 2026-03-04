@@ -288,6 +288,18 @@ with tab1:
     st.divider()
     st.markdown(f"# 🧾 Разом: {pair_total:.2f} ₴")
 
+    st.markdown("### Дані для договору")
+    couple_names = st.text_input(
+        "Ім'я нареченого та нареченої",
+        key="couple_names",
+        placeholder="Наприклад: Іван та Марія",
+    )
+    agreement_number = st.text_input(
+        "Номер угоди",
+        key="agreement_number",
+        placeholder="Наприклад: WG-2026-015",
+    )
+
     if st.button("📄 Згенерувати PDF"):
 
         data = {
@@ -320,7 +332,9 @@ with tab1:
             "w_coating":woman["coating"],
             "m_coating":man["coating"],
             "w_combo":woman["combo"],
-            "m_combo":man["combo"]
+            "m_combo":man["combo"],
+            "couple_names": couple_names.strip() or None,
+            "agreement_number": agreement_number.strip() or None,
         }
 
         out = generate_pdf(get_background_path(selected_background),data)

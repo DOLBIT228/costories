@@ -41,6 +41,33 @@ def append_pricing_rows(table, rows, ring_title):
         ])
 
 
+def draw_footer(canvas_obj, doc, data):
+    couple_names = data.get("couple_names")
+    agreement_number = data.get("agreement_number")
+
+    footer_lines = []
+    if couple_names:
+        footer_lines.append(f"Ім'я нареченого та нареченої: {couple_names}")
+    if agreement_number:
+        footer_lines.append(f"Номер угоди: {agreement_number}")
+
+    if not footer_lines:
+        return
+
+    canvas_obj.saveState()
+    canvas_obj.setFont("Montserrat", 8)
+    canvas_obj.setFillColor(colors.white)
+
+    x = doc.leftMargin
+    y = 10 * mm
+    line_gap = 4 * mm
+
+    for i, line in enumerate(footer_lines):
+        canvas_obj.drawString(x, y + (len(footer_lines) - i - 1) * line_gap, line)
+
+    canvas_obj.restoreState()
+
+
 def generate_pdf(background, data, out="final.pdf"):
 
     doc = SimpleDocTemplate(
@@ -203,6 +230,10 @@ def generate_pdf(background, data, out="final.pdf"):
 
     elements.append(fit_table)
 
-    doc.build(elements, onFirstPage=draw_bg)
+    def draw_first_page(canvas_obj, page_doc):
+        draw_bg(canvas_obj, page_doc)
+        draw_footer(canvas_obj, page_doc, data)
+
+    doc.build(elements, onFirstPage=draw_first_page)
 
     return out
