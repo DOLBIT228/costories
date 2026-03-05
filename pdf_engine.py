@@ -3,12 +3,33 @@ from reportlab.platypus import KeepInFrame, SimpleDocTemplate, Spacer, Table, Ta
 from reportlab.lib import colors
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.ttfonts import TTFError
 from reportlab.lib.units import mm
 from PIL import Image
+from pathlib import Path
 import tempfile
 
-pdfmetrics.registerFont(TTFont("EUkraineRegular", "e-Ukraine-UltraLight.otf"))
-pdfmetrics.registerFont(TTFont("EUkraineBold", "e-Ukraine-Bold.otf"))
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def register_font_with_fallback(font_name, preferred_filename, fallback_filename):
+    for filename in (preferred_filename, fallback_filename):
+        font_path = BASE_DIR / filename
+        if not font_path.exists():
+            continue
+        try:
+            pdfmetrics.registerFont(TTFont(font_name, str(font_path)))
+            return
+        except TTFError:
+            continue
+
+    raise RuntimeError(
+        f"Unable to register font '{font_name}'. Tried: {preferred_filename}, {fallback_filename}."
+    )
+
+
+register_font_with_fallback("EUkraineRegular", "e-Ukraine-UltraLight.otf", "Montserrat-Regular.ttf")
+register_font_with_fallback("EUkraineBold", "e-Ukraine-Bold.otf", "Montserrat-Bold.ttf")
 
 
 def get_pdf_color(data):
