@@ -19,20 +19,18 @@ def list_background_files():
     allowed = {".png", ".jpg", ".jpeg"}
     files = sorted([f.name for f in BACKGROUNDS_DIR.iterdir() if f.is_file() and f.suffix.lower() in allowed])
 
-    legacy = Path("background.png")
-    if legacy.exists() and "background.png" not in files:
-        files.insert(0, "background.png")
 
     return files
 
 
 def get_background_path(filename):
-    if filename == "background.png":
-        return "background.png"
-
     candidate = BACKGROUNDS_DIR / filename
     if candidate.exists():
         return str(candidate)
+
+    fallback = BACKGROUNDS_DIR / "full_white.png"
+    if fallback.exists():
+        return str(fallback)
 
     return "background.png"
 
@@ -128,11 +126,11 @@ with tab2:
     backgrounds = list_background_files()
     current_background = pd.read_sql("SELECT background_file FROM settings WHERE id=1", conn).iloc[0]["background_file"]
     if current_background not in backgrounds:
-        current_background = backgrounds[0] if backgrounds else "background.png"
+        current_background = backgrounds[0] if backgrounds else "full_white.png"
 
     selected_background = st.selectbox(
         "Фон для формування PDF",
-        options=backgrounds if backgrounds else ["background.png"],
+        options=backgrounds if backgrounds else ["full_white.png"],
         index=(backgrounds.index(current_background) if backgrounds else 0),
         key="selected_background",
     )

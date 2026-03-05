@@ -12,10 +12,10 @@ pdfmetrics.registerFont(TTFont("EUkraineBold", "e-Ukraine-Bold.otf"))
 
 
 def get_pdf_color(data):
-    value = str(data.get("text_color", "#fff")).strip().lower()
+    value = str(data.get("text_color", "#000000")).strip().lower()
     if value.startswith("#") and len(value) in (4, 7) and all(ch in "0123456789abcdef" for ch in value[1:]):
         return colors.HexColor(value)
-    return colors.HexColor("#fff")
+    return colors.HexColor("#000000")
 
 
 def save_uploaded(upload):
