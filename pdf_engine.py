@@ -206,6 +206,7 @@ def generate_pdf(background, data, out="final.pdf"):
     append_pricing_rows(table, data["w_pricing_rows"], "Жіноча")
     append_pricing_rows(table, data["m_pricing_rows"], "Чоловіча")
 
+    idx_summary_header = len(table)
     table.append(pricing_row("ЗАГАЛЬНА ВАРТІСТЬ"))
 
     idx_w = len(table)
@@ -233,6 +234,7 @@ def generate_pdf(background, data, out="final.pdf"):
         ("ALIGN", (2, 0), (8, 0), "CENTER"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("SPAN", (2, idx_summary_header), (8, idx_summary_header)),
         ("SPAN", (2, idx_w), (8, idx_w)),
         ("SPAN", (2, idx_m), (8, idx_m)),
         ("SPAN", (2, idx_pair), (8, idx_pair)),
@@ -248,13 +250,21 @@ def generate_pdf(background, data, out="final.pdf"):
         append_split_row_line(style, row_idx, "LINEBELOW", 0.3, colors.HexColor("#8a919e"), VISIBLE_PRICE_COLS)
 
     for i,r in enumerate(table):
-        if all(r[col] == "" for col in VISIBLE_PRICE_COLS[1:]):
+        if all(r[col] == "" for col in VISIBLE_PRICE_COLS[1:]) and r[0] != "ЗАГАЛЬНА ВАРТІСТЬ":
             style.append(("SPAN",(0,i),(-1,i)))
             style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
             style.append(("TEXTCOLOR", (0, i), (-1, i), colors.white))
             style.append(("TOPPADDING", (0, i), (-1, i), 8))
             style.append(("BOTTOMPADDING", (0, i), (-1, i), 5))
             style.append(("LINEBELOW", (0, i), (8, i), 1, colors.HexColor("#8a919e")))
+
+    style += [
+        ("FONT", (0, idx_summary_header), (8, idx_summary_header), "MontserratBold", 11),
+        ("TEXTCOLOR", (0, idx_summary_header), (8, idx_summary_header), colors.white),
+        ("TOPPADDING", (0, idx_summary_header), (8, idx_summary_header), 8),
+        ("BOTTOMPADDING", (0, idx_summary_header), (8, idx_summary_header), 5),
+        ("LINEBELOW", (0, idx_summary_header), (8, idx_summary_header), 1, colors.HexColor("#8a919e")),
+    ]
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
