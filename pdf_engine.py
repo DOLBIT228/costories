@@ -36,6 +36,12 @@ def pricing_row(col_1="", col_2="", col_3="", col_4="", col_5=""):
     return [col_1, "", col_2, "", col_3, "", col_4, "", col_5]
 
 
+def pricing_summary_row(label, value):
+    # Keep the first column untouched and place the total value into one merged block
+    # built from visual columns 2-5.
+    return pricing_row(label, value)
+
+
 def append_pricing_rows(table, rows, ring_title):
     table.append(pricing_row(ring_title))
     table.append(pricing_row("Товар/послуга", "Ціна", "К-сть", "Знижка", "Вартість"))
@@ -207,16 +213,16 @@ def generate_pdf(background, data, out="final.pdf"):
     append_pricing_rows(table, data["m_pricing_rows"], "Чоловіча")
 
     idx_summary_header = len(table)
-    table.append(pricing_row("ЗАГАЛЬНА ВАРТІСТЬ"))
+    table.append(pricing_summary_row("ЗАГАЛЬНА ВАРТІСТЬ", ""))
 
     idx_w = len(table)
-    table.append(pricing_row("Жіноча", f'{data["w_total"]:.0f} ₴'))
+    table.append(pricing_summary_row("Жіноча", f'{data["w_total"]:.0f} ₴'))
 
     idx_m = len(table)
-    table.append(pricing_row("Чоловіча", f'{data["m_total"]:.0f} ₴'))
+    table.append(pricing_summary_row("Чоловіча", f'{data["m_total"]:.0f} ₴'))
 
     idx_pair = len(table)
-    table.append(pricing_row("Загальна вартість", f'{data["pair_total"]:.0f} ₴'))
+    table.append(pricing_summary_row("Загальна вартість", f'{data["pair_total"]:.0f} ₴'))
 
     pricing_col_widths = [64 * mm, 3 * mm, 24 * mm, 3 * mm, 20 * mm, 3 * mm, 20 * mm, 3 * mm, 30 * mm]
     tbl = Table(table, colWidths=pricing_col_widths)
