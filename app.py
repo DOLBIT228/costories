@@ -71,8 +71,6 @@ with tab2:
 
     settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
     usd = settings["usd"]
-    selected_background = settings["background_file"]
-    text_color = normalize_text_color(settings["text_color"])
     new_usd = st.number_input("USD → UAH",value=float(usd))
 
     if st.button("Зберегти курс"):
@@ -154,8 +152,6 @@ with tab1:
     coat = pd.read_sql("SELECT * FROM coatings",conn)
     settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
     usd = settings["usd"]
-    selected_background = settings["background_file"]
-    text_color = normalize_text_color(settings["text_color"])
 
     col1,col2 = st.columns(2)
 
@@ -321,6 +317,10 @@ with tab1:
     )
 
     if st.button("📄 Згенерувати PDF"):
+        latest_settings = pd.read_sql("SELECT background_file, text_color FROM settings WHERE id=1", conn).iloc[0]
+        background_file = latest_settings["background_file"]
+        background_path = get_background_path(background_file)
+        pdf_text_color = normalize_text_color(latest_settings["text_color"])
 
         data = {
             "photo1":photo1,
@@ -355,10 +355,12 @@ with tab1:
             "m_combo":man["combo"],
             "couple_names": couple_names.strip() or None,
             "agreement_number": agreement_number.strip() or None,
-            "text_color": text_color,
+            "text_color": pdf_text_color,
+            "background_file": background_file,
+            "background_path": background_path,
         }
 
-        out = generate_pdf(get_background_path(selected_background),data)
+        out = generate_pdf(data)
 
         with open(out,"rb") as f:
             st.download_button("⬇️ Завантажити PDF",f,file_name="koshtorys.pdf")
