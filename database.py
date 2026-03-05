@@ -1,4 +1,5 @@
 import sqlite3
+import re
 
 DB = "data.db"
 
@@ -19,6 +20,13 @@ FIXED_METALS = [
 ]
 
 JEWELER_TYPES = ["platinum","premium","premium_plus"]
+DEFAULT_TEXT_COLOR = "#fff"
+
+
+def normalize_text_color(value):
+    if isinstance(value, str) and re.fullmatch(r"#[0-9a-fA-F]{3}", value.strip()):
+        return value.strip().lower()
+    return DEFAULT_TEXT_COLOR
 
 def get_conn():
     return sqlite3.connect(DB, check_same_thread=False)
@@ -57,9 +65,15 @@ def init_db():
     settings_cols = [row[1] for row in cur.execute("PRAGMA table_info(settings)")]
     if "background_file" not in settings_cols:
         cur.execute("ALTER TABLE settings ADD COLUMN background_file TEXT DEFAULT 'background.png'")
+    if "text_color" not in settings_cols:
+        cur.execute("ALTER TABLE settings ADD COLUMN text_color TEXT DEFAULT '#fff'")
 
-    cur.execute("INSERT OR IGNORE INTO settings(id, usd, background_file) VALUES(1,40,'background.png')")
+    cur.execute("INSERT OR IGNORE INTO settings(id, usd, background_file, text_color) VALUES(1,40,'background.png',?)", (DEFAULT_TEXT_COLOR,))
     cur.execute("UPDATE settings SET background_file='background.png' WHERE background_file IS NULL OR background_file=''")
+    current_color = cur.execute("SELECT text_color FROM settings WHERE id=1").fetchone()[0]
+    normalized_color = normalize_text_color(current_color)
+    if current_color != normalized_color:
+        cur.execute("UPDATE settings SET text_color=? WHERE id=1", (normalized_color,))
 
     # stones in USD
     cur.execute("""

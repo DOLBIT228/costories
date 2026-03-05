@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 from pathlib import Path
 import shutil
-from database import get_conn, init_db, STONE_SIZES, STONE_TYPES
+from database import get_conn, init_db, STONE_SIZES, STONE_TYPES, normalize_text_color
 from pdf_engine import generate_pdf
 
 
@@ -69,9 +69,10 @@ with tab2:
 
     st.subheader("Курс USD")
 
-    settings = pd.read_sql("SELECT usd, background_file FROM settings WHERE id=1",conn).iloc[0]
+    settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
     usd = settings["usd"]
     selected_background = settings["background_file"]
+    text_color = normalize_text_color(settings["text_color"])
     new_usd = st.number_input("USD → UAH",value=float(usd))
 
     if st.button("Зберегти курс"):
@@ -84,6 +85,24 @@ with tab2:
         conn.execute("UPDATE settings SET usd=? WHERE id=1",(rate,))
         conn.commit()
         st.success(f"Оновлено: {rate}")
+
+
+    st.subheader("Колір тексту та ліній у PDF")
+    new_text_color = st.text_input(
+        "Колір у форматі #rgb",
+        value=text_color,
+        max_chars=4,
+        help="Наприклад: #fff, #000, #c4a",
+    )
+
+    if st.button("Зберегти колір"):
+        normalized_color = normalize_text_color(new_text_color)
+        if normalized_color != new_text_color.strip().lower():
+            st.error("Некоректний формат. Використовуйте тільки #rgb, наприклад #fff.")
+        else:
+            conn.execute("UPDATE settings SET text_color=? WHERE id=1", (normalized_color,))
+            conn.commit()
+            st.success(f"Колір оновлено: {normalized_color}")
 
     st.subheader("Фони для PDF")
 
@@ -133,9 +152,10 @@ with tab1:
     profiles = pd.read_sql("SELECT * FROM profiles",conn)
     engr = pd.read_sql("SELECT * FROM engravings",conn)
     coat = pd.read_sql("SELECT * FROM coatings",conn)
-    settings = pd.read_sql("SELECT usd, background_file FROM settings WHERE id=1",conn).iloc[0]
+    settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
     usd = settings["usd"]
     selected_background = settings["background_file"]
+    text_color = normalize_text_color(settings["text_color"])
 
     col1,col2 = st.columns(2)
 
@@ -335,6 +355,7 @@ with tab1:
             "m_combo":man["combo"],
             "couple_names": couple_names.strip() or None,
             "agreement_number": agreement_number.strip() or None,
+            "text_color": text_color,
         }
 
         out = generate_pdf(get_background_path(selected_background),data)

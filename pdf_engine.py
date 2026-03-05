@@ -11,6 +11,13 @@ pdfmetrics.registerFont(TTFont("Montserrat", "Montserrat-Regular.ttf"))
 pdfmetrics.registerFont(TTFont("MontserratBold", "Montserrat-Bold.ttf"))
 
 
+def get_pdf_color(data):
+    value = str(data.get("text_color", "#fff")).strip().lower()
+    if len(value) == 4 and value.startswith("#") and all(ch in "0123456789abcdef" for ch in value[1:]):
+        return colors.HexColor(value)
+    return colors.HexColor("#fff")
+
+
 def save_uploaded(upload):
     if not upload:
         return None
@@ -75,7 +82,7 @@ def draw_footer(canvas_obj, doc, data):
 
     canvas_obj.saveState()
     canvas_obj.setFont("Montserrat", 8)
-    canvas_obj.setFillColor(colors.white)
+    canvas_obj.setFillColor(get_pdf_color(data))
 
     x = doc.leftMargin
     y = 10 * mm
@@ -99,6 +106,7 @@ def generate_pdf(background, data, out="final.pdf"):
     )
 
     elements = []
+    pdf_color = get_pdf_color(data)
 
     # ================= BACKGROUND + PHOTOS =================
     def draw_bg(canvas, doc):
@@ -180,8 +188,8 @@ def generate_pdf(background, data, out="final.pdf"):
     params_style = [
         ("FONT", (0, 0), (-1, -1), "Montserrat", 9),
         ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#d9dee7")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("TEXTCOLOR", (0, 0), (-1, -1), pdf_color),
+        ("TEXTCOLOR", (0, 0), (-1, 0), pdf_color),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("ALIGN", (2, 0), (4, -1), "LEFT"),
@@ -193,15 +201,15 @@ def generate_pdf(background, data, out="final.pdf"):
         ("RIGHTPADDING", (1, 0), (1, -1), 0),
         ("LEFTPADDING", (3, 0), (3, -1), 0),
         ("RIGHTPADDING", (3, 0), (3, -1), 0),
-        ("LINEBELOW", (0, 0), (0, 0), 1, colors.HexColor("#8a919e")),
-        ("LINEBELOW", (2, 0), (2, 0), 1, colors.HexColor("#8a919e")),
-        ("LINEBELOW", (4, 0), (4, 0), 1, colors.HexColor("#8a919e")),
+        ("LINEBELOW", (0, 0), (0, 0), 1, pdf_color),
+        ("LINEBELOW", (2, 0), (2, 0), 1, pdf_color),
+        ("LINEBELOW", (4, 0), (4, 0), 1, pdf_color),
     ]
 
     for row_idx in range(1, len(params_table)):
-        params_style.append(("LINEBELOW", (0, row_idx), (0, row_idx), 0.3, colors.HexColor("#8a919e")))
-        params_style.append(("LINEBELOW", (2, row_idx), (2, row_idx), 0.3, colors.HexColor("#8a919e")))
-        params_style.append(("LINEBELOW", (4, row_idx), (4, row_idx), 0.3, colors.HexColor("#8a919e")))
+        params_style.append(("LINEBELOW", (0, row_idx), (0, row_idx), 0.3, pdf_color))
+        params_style.append(("LINEBELOW", (2, row_idx), (2, row_idx), 0.3, pdf_color))
+        params_style.append(("LINEBELOW", (4, row_idx), (4, row_idx), 0.3, pdf_color))
 
     params_tbl.setStyle(TableStyle(params_style))
 
@@ -230,7 +238,7 @@ def generate_pdf(background, data, out="final.pdf"):
 
     style = [
         ("FONT", (0, 0), (-1, -1), "Montserrat", 9),
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#d9dee7")),
+        ("TEXTCOLOR", (0, 0), (-1, -1), pdf_color),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("ALIGN", (2, 0), (8, -1), "LEFT"),
@@ -239,7 +247,7 @@ def generate_pdf(background, data, out="final.pdf"):
         ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
         ("ALIGN", (2, 0), (8, 0), "CENTER"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("TEXTCOLOR", (0, 0), (-1, 0), pdf_color),
         ("SPAN", (2, idx_summary_header), (8, idx_summary_header)),
         ("SPAN", (2, idx_w), (8, idx_w)),
         ("SPAN", (2, idx_m), (8, idx_m)),
@@ -250,33 +258,33 @@ def generate_pdf(background, data, out="final.pdf"):
         style.append(("LEFTPADDING", (gap_col, 0), (gap_col, -1), 0))
         style.append(("RIGHTPADDING", (gap_col, 0), (gap_col, -1), 0))
 
-    append_split_row_line(style, 0, "LINEBELOW", 1, colors.HexColor("#8a919e"), VISIBLE_PRICE_COLS)
+    append_split_row_line(style, 0, "LINEBELOW", 1, pdf_color, VISIBLE_PRICE_COLS)
 
     for row_idx in range(1, len(table)):
-        append_split_row_line(style, row_idx, "LINEBELOW", 0.3, colors.HexColor("#8a919e"), VISIBLE_PRICE_COLS)
+        append_split_row_line(style, row_idx, "LINEBELOW", 0.3, pdf_color, VISIBLE_PRICE_COLS)
 
     for i,r in enumerate(table):
         if all(r[col] == "" for col in VISIBLE_PRICE_COLS[1:]) and r[0] != "ЗАГАЛЬНА ВАРТІСТЬ":
             style.append(("SPAN",(0,i),(-1,i)))
             style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
-            style.append(("TEXTCOLOR", (0, i), (-1, i), colors.white))
+            style.append(("TEXTCOLOR", (0, i), (-1, i), pdf_color))
             style.append(("TOPPADDING", (0, i), (-1, i), 8))
             style.append(("BOTTOMPADDING", (0, i), (-1, i), 5))
-            style.append(("LINEBELOW", (0, i), (8, i), 1, colors.HexColor("#8a919e")))
+            style.append(("LINEBELOW", (0, i), (8, i), 1, pdf_color))
 
     style += [
         ("FONT", (0, idx_summary_header), (8, idx_summary_header), "MontserratBold", 11),
-        ("TEXTCOLOR", (0, idx_summary_header), (8, idx_summary_header), colors.white),
+        ("TEXTCOLOR", (0, idx_summary_header), (8, idx_summary_header), pdf_color),
         ("TOPPADDING", (0, idx_summary_header), (8, idx_summary_header), 8),
         ("BOTTOMPADDING", (0, idx_summary_header), (8, idx_summary_header), 5),
-        ("LINEBELOW", (0, idx_summary_header), (8, idx_summary_header), 1, colors.HexColor("#8a919e")),
+        ("LINEBELOW", (0, idx_summary_header), (8, idx_summary_header), 1, pdf_color),
     ]
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
         style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 8))
-        style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), colors.white))
-        append_split_row_line(style, pricing_header_idx, "LINEABOVE", 0.8, colors.HexColor("#8a919e"), VISIBLE_PRICE_COLS)
+        style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), pdf_color))
+        append_split_row_line(style, pricing_header_idx, "LINEABOVE", 0.8, pdf_color, VISIBLE_PRICE_COLS)
 
     style += [
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
@@ -287,7 +295,7 @@ def generate_pdf(background, data, out="final.pdf"):
     # In the summary block we use merged cells on columns 2-8,
     # so draw a continuous white divider instead of split per-column lines.
     for summary_row in (idx_w, idx_m, idx_pair):
-        style.append(("LINEBELOW", (2, summary_row), (8, summary_row), 0.8, colors.white))
+        style.append(("LINEBELOW", (2, summary_row), (8, summary_row), 0.8, pdf_color))
 
     tbl.setStyle(TableStyle(style))
 
