@@ -284,6 +284,11 @@ def generate_pdf(background, data, out="final.pdf"):
         ("ALIGN", (2, idx_w), (8, idx_pair), "LEFT"),
     ]
 
+    # In the summary block we use merged cells on columns 2-8,
+    # so draw a continuous white divider instead of split per-column lines.
+    for summary_row in (idx_w, idx_m, idx_pair):
+        style.append(("LINEBELOW", (2, summary_row), (8, summary_row), 0.8, colors.white))
+
     tbl.setStyle(TableStyle(style))
 
     available_table_height = doc.height - table_top_offset
