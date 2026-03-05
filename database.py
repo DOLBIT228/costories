@@ -20,13 +20,20 @@ FIXED_METALS = [
 ]
 
 JEWELER_TYPES = ["platinum","premium","premium_plus"]
-DEFAULT_TEXT_COLOR = "#fff"
+DEFAULT_TEXT_COLOR = "#000000"
+DEFAULT_BACKGROUND_FILE = "full_white.png"
 
 
 def normalize_text_color(value):
     if isinstance(value, str) and re.fullmatch(r"#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?", value.strip()):
         return value.strip().lower()
     return DEFAULT_TEXT_COLOR
+
+
+def normalize_background_file(value):
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return DEFAULT_BACKGROUND_FILE
 
 def get_conn():
     return sqlite3.connect(DB, check_same_thread=False)
@@ -58,18 +65,24 @@ def init_db():
     CREATE TABLE IF NOT EXISTS settings(
         id INTEGER PRIMARY KEY,
         usd REAL DEFAULT 40,
-        background_file TEXT DEFAULT 'background.png'
+        background_file TEXT DEFAULT 'full_white.png'
     )
     """)
 
     settings_cols = [row[1] for row in cur.execute("PRAGMA table_info(settings)")]
     if "background_file" not in settings_cols:
-        cur.execute("ALTER TABLE settings ADD COLUMN background_file TEXT DEFAULT 'background.png'")
+        cur.execute("ALTER TABLE settings ADD COLUMN background_file TEXT DEFAULT 'full_white.png'")
     if "text_color" not in settings_cols:
-        cur.execute("ALTER TABLE settings ADD COLUMN text_color TEXT DEFAULT '#fff'")
+        cur.execute("ALTER TABLE settings ADD COLUMN text_color TEXT DEFAULT '#000000'")
 
-    cur.execute("INSERT OR IGNORE INTO settings(id, usd, background_file, text_color) VALUES(1,40,'background.png',?)", (DEFAULT_TEXT_COLOR,))
-    cur.execute("UPDATE settings SET background_file='background.png' WHERE background_file IS NULL OR background_file=''")
+    cur.execute(
+        "INSERT OR IGNORE INTO settings(id, usd, background_file, text_color) VALUES(1,40,?,?)",
+        (DEFAULT_BACKGROUND_FILE, DEFAULT_TEXT_COLOR),
+    )
+    current_background = cur.execute("SELECT background_file FROM settings WHERE id=1").fetchone()[0]
+    normalized_background = normalize_background_file(current_background)
+    if current_background != normalized_background:
+        cur.execute("UPDATE settings SET background_file=? WHERE id=1", (normalized_background,))
     current_color = cur.execute("SELECT text_color FROM settings WHERE id=1").fetchone()[0]
     normalized_color = normalize_text_color(current_color)
     if current_color != normalized_color:
