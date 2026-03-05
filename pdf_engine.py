@@ -7,8 +7,8 @@ from reportlab.lib.units import mm
 from PIL import Image
 import tempfile
 
-pdfmetrics.registerFont(TTFont("Montserrat", "Montserrat-Regular.ttf"))
-pdfmetrics.registerFont(TTFont("MontserratBold", "Montserrat-Bold.ttf"))
+pdfmetrics.registerFont(TTFont("EUkraineRegular", "e-Ukraine-UltraLight.otf"))
+pdfmetrics.registerFont(TTFont("EUkraineBold", "e-Ukraine-Bold.otf"))
 
 
 def get_pdf_color(data):
@@ -81,7 +81,7 @@ def draw_footer(canvas_obj, doc, data):
         return
 
     canvas_obj.saveState()
-    canvas_obj.setFont("Montserrat", 8)
+    canvas_obj.setFont("EUkraineRegular", 8)
     canvas_obj.setFillColor(get_pdf_color(data))
 
     x = doc.leftMargin
@@ -201,8 +201,8 @@ def generate_pdf(data, out="final.pdf"):
     params_tbl.hAlign = "CENTER"
 
     params_style = [
-        ("FONT", (0, 0), (-1, -1), "Montserrat", body_font_size),
-        ("FONT", (0, 0), (-1, 0), "MontserratBold", section_font_size),
+        ("FONT", (0, 0), (-1, -1), "EUkraineRegular", body_font_size),
+        ("FONT", (0, 0), (-1, 0), "EUkraineBold", section_font_size),
         ("TEXTCOLOR", (0, 0), (-1, -1), pdf_color),
         ("TEXTCOLOR", (0, 0), (-1, 0), pdf_color),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -252,14 +252,14 @@ def generate_pdf(data, out="final.pdf"):
     tbl.hAlign = "CENTER"
 
     style = [
-        ("FONT", (0, 0), (-1, -1), "Montserrat", body_font_size),
+        ("FONT", (0, 0), (-1, -1), "EUkraineRegular", body_font_size),
         ("TEXTCOLOR", (0, 0), (-1, -1), pdf_color),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("ALIGN", (2, 0), (8, -1), "LEFT"),
         ("TOPPADDING", (0, 0), (-1, -1), row_top_padding),
         ("BOTTOMPADDING", (0, 0), (-1, -1), row_bottom_padding),
-        ("FONT", (0, 0), (-1, 0), "MontserratBold", section_font_size),
+        ("FONT", (0, 0), (-1, 0), "EUkraineBold", section_font_size),
         ("ALIGN", (2, 0), (8, 0), "CENTER"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), title_bottom_padding),
         ("TEXTCOLOR", (0, 0), (-1, 0), pdf_color),
@@ -281,14 +281,14 @@ def generate_pdf(data, out="final.pdf"):
     for i,r in enumerate(table):
         if all(r[col] == "" for col in VISIBLE_PRICE_COLS[1:]) and r[0] != "ЗАГАЛЬНА ВАРТІСТЬ":
             style.append(("SPAN",(0,i),(-1,i)))
-            style.append(("FONT",(0,i),(-1,i),"MontserratBold",section_font_size))
+            style.append(("FONT",(0,i),(-1,i),"EUkraineBold",section_font_size))
             style.append(("TEXTCOLOR", (0, i), (-1, i), pdf_color))
             style.append(("TOPPADDING", (0, i), (-1, i), section_top_padding))
             style.append(("BOTTOMPADDING", (0, i), (-1, i), section_bottom_padding))
             style.append(("LINEBELOW", (0, i), (8, i), 1, pdf_color))
 
     style += [
-        ("FONT", (0, idx_summary_header), (8, idx_summary_header), "MontserratBold", section_font_size),
+        ("FONT", (0, idx_summary_header), (8, idx_summary_header), "EUkraineBold", section_font_size),
         ("TEXTCOLOR", (0, idx_summary_header), (8, idx_summary_header), pdf_color),
         ("TOPPADDING", (0, idx_summary_header), (8, idx_summary_header), section_top_padding),
         ("BOTTOMPADDING", (0, idx_summary_header), (8, idx_summary_header), section_bottom_padding),
@@ -297,13 +297,13 @@ def generate_pdf(data, out="final.pdf"):
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
-        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", header_font_size))
+        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "EUkraineBold", header_font_size))
         style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), pdf_color))
         append_split_row_line(style, pricing_header_idx, "LINEABOVE", 0.8, pdf_color, VISIBLE_PRICE_COLS)
 
     style += [
-        ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",section_font_size),
-        ("FONT", (2, idx_w), (8, idx_pair), "MontserratBold", body_font_size),
+        ("FONT",(0,idx_pair),(-1,idx_pair),"EUkraineBold",section_font_size),
+        ("FONT", (2, idx_w), (8, idx_pair), "EUkraineBold", body_font_size),
         ("ALIGN", (2, idx_w), (8, idx_pair), "LEFT"),
     ]
 
