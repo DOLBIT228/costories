@@ -24,7 +24,7 @@ DEFAULT_TEXT_COLOR = "#fff"
 
 
 def normalize_text_color(value):
-    if isinstance(value, str) and re.fullmatch(r"#[0-9a-fA-F]{3}", value.strip()):
+    if isinstance(value, str) and re.fullmatch(r"#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?", value.strip()):
         return value.strip().lower()
     return DEFAULT_TEXT_COLOR
 

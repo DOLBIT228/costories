@@ -89,16 +89,16 @@ with tab2:
 
     st.subheader("Колір тексту та ліній у PDF")
     new_text_color = st.text_input(
-        "Колір у форматі #rgb",
+        "Колір у форматі HEX (#rgb або #rrggbb)",
         value=text_color,
-        max_chars=4,
-        help="Наприклад: #fff, #000, #c4a",
+        max_chars=7,
+        help="Наприклад: #fff, #000, #c4a, #ffffff, #1f2937",
     )
 
     if st.button("Зберегти колір"):
         normalized_color = normalize_text_color(new_text_color)
         if normalized_color != new_text_color.strip().lower():
-            st.error("Некоректний формат. Використовуйте тільки #rgb, наприклад #fff.")
+            st.error("Некоректний формат. Використовуйте HEX: #rgb або #rrggbb (наприклад #fff чи #ffffff).")
         else:
             conn.execute("UPDATE settings SET text_color=? WHERE id=1", (normalized_color,))
             conn.commit()
