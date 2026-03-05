@@ -167,7 +167,8 @@ def generate_pdf(background, data, out="final.pdf"):
         ["Вага", "", f'{data["w_weight"]:.2f} г', "", f'{data["m_weight"]:.2f} г'],
     ]
 
-    params_tbl = Table(params_table, colWidths=[58*mm, 4*mm, 52*mm, 4*mm, 52*mm])
+    params_col_widths = [58 * mm, 4 * mm, 52 * mm, 4 * mm, 52 * mm]
+    params_tbl = Table(params_table, colWidths=params_col_widths)
     params_tbl.hAlign = "CENTER"
 
     params_style = [
@@ -216,7 +217,8 @@ def generate_pdf(background, data, out="final.pdf"):
     idx_pair = len(table)
     table.append(pricing_row("Загальна вартість", f'{data["pair_total"]:.0f} ₴'))
 
-    tbl = Table(table, colWidths=[52*mm, 3*mm, 24*mm, 3*mm, 20*mm, 3*mm, 20*mm, 3*mm, 30*mm])
+    pricing_col_widths = [64 * mm, 3 * mm, 24 * mm, 3 * mm, 20 * mm, 3 * mm, 20 * mm, 3 * mm, 30 * mm]
+    tbl = Table(table, colWidths=pricing_col_widths)
     tbl.hAlign = "CENTER"
 
     style = [
