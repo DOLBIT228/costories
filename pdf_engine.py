@@ -13,7 +13,7 @@ pdfmetrics.registerFont(TTFont("MontserratBold", "Montserrat-Bold.ttf"))
 
 def get_pdf_color(data):
     value = str(data.get("text_color", "#fff")).strip().lower()
-    if len(value) == 4 and value.startswith("#") and all(ch in "0123456789abcdef" for ch in value[1:]):
+    if value.startswith("#") and len(value) in (4, 7) and all(ch in "0123456789abcdef" for ch in value[1:]):
         return colors.HexColor(value)
     return colors.HexColor("#fff")
 
