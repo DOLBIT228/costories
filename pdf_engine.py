@@ -110,6 +110,19 @@ def generate_pdf(data, out="final.pdf"):
     elements = []
     pdf_color = get_pdf_color(data)
 
+    pricing_rows_total = len(data["w_pricing_rows"]) + len(data["m_pricing_rows"])
+    is_compact_layout = pricing_rows_total >= 12
+
+    body_font_size = 8 if is_compact_layout else 9
+    section_font_size = 10 if is_compact_layout else 11
+    header_font_size = 7 if is_compact_layout else 8
+
+    row_top_padding = 2 if is_compact_layout else 3
+    row_bottom_padding = 3 if is_compact_layout else 5
+    section_top_padding = 6 if is_compact_layout else 8
+    section_bottom_padding = 4 if is_compact_layout else 5
+    title_bottom_padding = 5 if is_compact_layout else 6
+
     # ================= BACKGROUND + PHOTOS =================
     def draw_bg(canvas, doc):
 
@@ -188,17 +201,17 @@ def generate_pdf(data, out="final.pdf"):
     params_tbl.hAlign = "CENTER"
 
     params_style = [
-        ("FONT", (0, 0), (-1, -1), "Montserrat", 9),
-        ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
+        ("FONT", (0, 0), (-1, -1), "Montserrat", body_font_size),
+        ("FONT", (0, 0), (-1, 0), "MontserratBold", section_font_size),
         ("TEXTCOLOR", (0, 0), (-1, -1), pdf_color),
         ("TEXTCOLOR", (0, 0), (-1, 0), pdf_color),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("ALIGN", (2, 0), (4, -1), "LEFT"),
         ("ALIGN", (2, 0), (4, 0), "CENTER"),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), row_top_padding),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), row_bottom_padding),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), title_bottom_padding),
         ("LEFTPADDING", (1, 0), (1, -1), 0),
         ("RIGHTPADDING", (1, 0), (1, -1), 0),
         ("LEFTPADDING", (3, 0), (3, -1), 0),
@@ -239,16 +252,16 @@ def generate_pdf(data, out="final.pdf"):
     tbl.hAlign = "CENTER"
 
     style = [
-        ("FONT", (0, 0), (-1, -1), "Montserrat", 9),
+        ("FONT", (0, 0), (-1, -1), "Montserrat", body_font_size),
         ("TEXTCOLOR", (0, 0), (-1, -1), pdf_color),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("ALIGN", (2, 0), (8, -1), "LEFT"),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
+        ("TOPPADDING", (0, 0), (-1, -1), row_top_padding),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), row_bottom_padding),
+        ("FONT", (0, 0), (-1, 0), "MontserratBold", section_font_size),
         ("ALIGN", (2, 0), (8, 0), "CENTER"),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), title_bottom_padding),
         ("TEXTCOLOR", (0, 0), (-1, 0), pdf_color),
         ("SPAN", (2, idx_summary_header), (8, idx_summary_header)),
         ("SPAN", (2, idx_w), (8, idx_w)),
@@ -268,29 +281,29 @@ def generate_pdf(data, out="final.pdf"):
     for i,r in enumerate(table):
         if all(r[col] == "" for col in VISIBLE_PRICE_COLS[1:]) and r[0] != "ЗАГАЛЬНА ВАРТІСТЬ":
             style.append(("SPAN",(0,i),(-1,i)))
-            style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
+            style.append(("FONT",(0,i),(-1,i),"MontserratBold",section_font_size))
             style.append(("TEXTCOLOR", (0, i), (-1, i), pdf_color))
-            style.append(("TOPPADDING", (0, i), (-1, i), 8))
-            style.append(("BOTTOMPADDING", (0, i), (-1, i), 5))
+            style.append(("TOPPADDING", (0, i), (-1, i), section_top_padding))
+            style.append(("BOTTOMPADDING", (0, i), (-1, i), section_bottom_padding))
             style.append(("LINEBELOW", (0, i), (8, i), 1, pdf_color))
 
     style += [
-        ("FONT", (0, idx_summary_header), (8, idx_summary_header), "MontserratBold", 11),
+        ("FONT", (0, idx_summary_header), (8, idx_summary_header), "MontserratBold", section_font_size),
         ("TEXTCOLOR", (0, idx_summary_header), (8, idx_summary_header), pdf_color),
-        ("TOPPADDING", (0, idx_summary_header), (8, idx_summary_header), 8),
-        ("BOTTOMPADDING", (0, idx_summary_header), (8, idx_summary_header), 5),
+        ("TOPPADDING", (0, idx_summary_header), (8, idx_summary_header), section_top_padding),
+        ("BOTTOMPADDING", (0, idx_summary_header), (8, idx_summary_header), section_bottom_padding),
         ("LINEBELOW", (0, idx_summary_header), (8, idx_summary_header), 1, pdf_color),
     ]
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
-        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 8))
+        style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", header_font_size))
         style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), pdf_color))
         append_split_row_line(style, pricing_header_idx, "LINEABOVE", 0.8, pdf_color, VISIBLE_PRICE_COLS)
 
     style += [
-        ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
-        ("FONT", (2, idx_w), (8, idx_pair), "MontserratBold", 9),
+        ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",section_font_size),
+        ("FONT", (2, idx_w), (8, idx_pair), "MontserratBold", body_font_size),
         ("ALIGN", (2, idx_w), (8, idx_pair), "LEFT"),
     ]
 
@@ -305,13 +318,11 @@ def generate_pdf(data, out="final.pdf"):
     fit_table = KeepInFrame(
         maxWidth=doc.width,
         maxHeight=available_table_height,
-        content=[tbl],
+        content=[params_tbl, Spacer(1, 6 if is_compact_layout else 8), tbl],
         mode="shrink",
         hAlign="CENTER",
     )
 
-    elements.append(params_tbl)
-    elements.append(Spacer(1, 8))
     elements.append(fit_table)
 
     def draw_first_page(canvas_obj, page_doc):
