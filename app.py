@@ -304,13 +304,23 @@ with tab1:
     st.markdown(f"# 🧾 Разом: {pair_total:.2f} ₴")
 
     st.markdown("### Дані для договору")
+    st.markdown(
+        "<p style='font-size:1.05rem; font-weight:700; margin-bottom:0.25rem; font-family:inherit;'>Ім'я нареченого та нареченої</p>",
+        unsafe_allow_html=True,
+    )
     couple_names = st.text_input(
         "Ім'я нареченого та нареченої",
+        label_visibility="collapsed",
         key="couple_names",
         placeholder="Наприклад: Іван та Марія",
     )
+    st.markdown(
+        "<p style='font-size:1.05rem; font-weight:700; margin-bottom:0.25rem; font-family:inherit;'>Номер угоди</p>",
+        unsafe_allow_html=True,
+    )
     agreement_number = st.text_input(
         "Номер угоди",
+        label_visibility="collapsed",
         key="agreement_number",
         placeholder="Наприклад: WG-2026-015",
     )
