@@ -94,7 +94,9 @@ def draw_footer(canvas_obj, doc, data):
     canvas_obj.restoreState()
 
 
-def generate_pdf(background, data, out="final.pdf"):
+def generate_pdf(data, out="final.pdf"):
+
+    background = data.get("background_path", "background.png")
 
     doc = SimpleDocTemplate(
         out,
