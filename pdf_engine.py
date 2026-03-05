@@ -28,23 +28,30 @@ def row(label, w, m):
     return [[label, str(w), str(m)]]
 
 
+VISIBLE_PRICE_COLS = [0, 2, 4, 6, 8]
+PRICE_GAP_COLS = [1, 3, 5, 7]
+
+
+def pricing_row(col_1="", col_2="", col_3="", col_4="", col_5=""):
+    return [col_1, "", col_2, "", col_3, "", col_4, "", col_5]
+
+
 def append_pricing_rows(table, rows, ring_title):
-    table.append([ring_title, "", "", "", ""])
-    table.append(["Товар/послуга", "Ціна", "К-сть", "Знижка", "Вартість"])
+    table.append(pricing_row(ring_title))
+    table.append(pricing_row("Товар/послуга", "Ціна", "К-сть", "Знижка", "Вартість"))
     for r in rows:
-        table.append([
+        table.append(pricing_row(
             r["Товар/послуга"],
             r["Ціна"],
             r["К-сть"],
             r["Знижка"],
             r["Сума"],
-        ])
+        ))
 
 
-def append_split_row_line(style, row_idx, line_type, thickness, color):
-    style.append((line_type, (0, row_idx), (0, row_idx), thickness, color))
-    style.append((line_type, (1, row_idx), (2, row_idx), thickness, color))
-    style.append((line_type, (3, row_idx), (4, row_idx), thickness, color))
+def append_split_row_line(style, row_idx, line_type, thickness, color, columns):
+    for col_idx in columns:
+        style.append((line_type, (col_idx, row_idx), (col_idx, row_idx), thickness, color))
 
 
 def draw_footer(canvas_obj, doc, data):
@@ -193,23 +200,23 @@ def generate_pdf(background, data, out="final.pdf"):
 
     table = []
 
-    table.append(["ЦІНОУТВОРЕННЯ", "", "", "", ""])
+    table.append(pricing_row("ЦІНОУТВОРЕННЯ"))
 
     append_pricing_rows(table, data["w_pricing_rows"], "Жіноча")
     append_pricing_rows(table, data["m_pricing_rows"], "Чоловіча")
 
-    table.append(["ЗАГАЛЬНА ВАРТІСТЬ", "", "", "", ""])
+    table.append(pricing_row("ЗАГАЛЬНА ВАРТІСТЬ"))
 
     idx_w = len(table)
-    table.append(["Жіноча", f'{data["w_total"]:.0f} ₴', "", "", ""])
+    table.append(pricing_row("Жіноча", f'{data["w_total"]:.0f} ₴'))
 
     idx_m = len(table)
-    table.append(["Чоловіча", f'{data["m_total"]:.0f} ₴', "", "", ""])
+    table.append(pricing_row("Чоловіча", f'{data["m_total"]:.0f} ₴'))
 
     idx_pair = len(table)
-    table.append(["Загальна вартість", f'{data["pair_total"]:.0f} ₴', "", "", ""])
+    table.append(pricing_row("Загальна вартість", f'{data["pair_total"]:.0f} ₴'))
 
-    tbl = Table(table, colWidths=[56*mm, 26*mm, 22*mm, 22*mm, 34*mm])
+    tbl = Table(table, colWidths=[52*mm, 3*mm, 24*mm, 3*mm, 20*mm, 3*mm, 20*mm, 3*mm, 30*mm])
     tbl.hAlign = "CENTER"
 
     style = [
@@ -217,52 +224,46 @@ def generate_pdf(background, data, out="final.pdf"):
         ("TEXTCOLOR", (0, 0), (-1, -1), colors.HexColor("#d9dee7")),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
-        ("ALIGN", (1, 0), (-1, -1), "LEFT"),
+        ("ALIGN", (2, 0), (8, -1), "LEFT"),
         ("TOPPADDING", (0, 0), (-1, -1), 3),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ("FONT", (0, 0), (-1, 0), "MontserratBold", 11),
-        ("ALIGN", (1, 0), (-1, 0), "CENTER"),
+        ("ALIGN", (2, 0), (8, 0), "CENTER"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("SPAN", (1, 0), (2, 0)),
-        ("SPAN", (3, 0), (4, 0)),
-        ("SPAN", (1, 1), (2, 1)),
-        ("SPAN", (3, 1), (4, 1)),
-        ("SPAN", (1, 2), (2, 2)),
-        ("SPAN", (3, 2), (4, 2)),
-        ("SPAN", (1, 3), (2, 3)),
-        ("SPAN", (3, 3), (4, 3)),
-        ("SPAN", (1, 4), (2, 4)),
-        ("SPAN", (3, 4), (4, 4)),
-        ("SPAN", (1, idx_w), (4, idx_w)),
-        ("SPAN", (1, idx_m), (4, idx_m)),
-        ("SPAN", (1, idx_pair), (4, idx_pair)),
+        ("SPAN", (2, idx_w), (8, idx_w)),
+        ("SPAN", (2, idx_m), (8, idx_m)),
+        ("SPAN", (2, idx_pair), (8, idx_pair)),
     ]
 
-    append_split_row_line(style, 0, "LINEBELOW", 1, colors.HexColor("#8a919e"))
+    for gap_col in PRICE_GAP_COLS:
+        style.append(("LEFTPADDING", (gap_col, 0), (gap_col, -1), 0))
+        style.append(("RIGHTPADDING", (gap_col, 0), (gap_col, -1), 0))
+
+    append_split_row_line(style, 0, "LINEBELOW", 1, colors.HexColor("#8a919e"), VISIBLE_PRICE_COLS)
 
     for row_idx in range(1, len(table)):
-        append_split_row_line(style, row_idx, "LINEBELOW", 0.3, colors.HexColor("#8a919e"))
+        append_split_row_line(style, row_idx, "LINEBELOW", 0.3, colors.HexColor("#8a919e"), VISIBLE_PRICE_COLS)
 
     for i,r in enumerate(table):
-        if r[1]=="" and r[2]=="" and r[3]=="" and r[4]=="":
+        if all(r[col] == "" for col in VISIBLE_PRICE_COLS[1:]):
             style.append(("SPAN",(0,i),(-1,i)))
             style.append(("FONT",(0,i),(-1,i),"MontserratBold",11))
             style.append(("TEXTCOLOR", (0, i), (-1, i), colors.white))
             style.append(("TOPPADDING", (0, i), (-1, i), 8))
             style.append(("BOTTOMPADDING", (0, i), (-1, i), 5))
-            append_split_row_line(style, i, "LINEBELOW", 1, colors.HexColor("#8a919e"))
+            style.append(("LINEBELOW", (0, i), (8, i), 1, colors.HexColor("#8a919e")))
 
     pricing_header_indexes = [i for i, r in enumerate(table) if r[0] == "Товар/послуга"]
     for pricing_header_idx in pricing_header_indexes:
         style.append(("FONT", (0, pricing_header_idx), (-1, pricing_header_idx), "MontserratBold", 8))
         style.append(("TEXTCOLOR", (0, pricing_header_idx), (-1, pricing_header_idx), colors.white))
-        append_split_row_line(style, pricing_header_idx, "LINEABOVE", 0.8, colors.HexColor("#8a919e"))
+        append_split_row_line(style, pricing_header_idx, "LINEABOVE", 0.8, colors.HexColor("#8a919e"), VISIBLE_PRICE_COLS)
 
     style += [
         ("FONT",(0,idx_pair),(-1,idx_pair),"MontserratBold",11),
-        ("FONT", (1, idx_w), (4, idx_pair), "MontserratBold", 9),
-        ("ALIGN", (1, idx_w), (4, idx_pair), "LEFT"),
+        ("FONT", (2, idx_w), (8, idx_pair), "MontserratBold", 9),
+        ("ALIGN", (2, idx_w), (8, idx_pair), "LEFT"),
     ]
 
     tbl.setStyle(TableStyle(style))
