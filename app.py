@@ -71,6 +71,7 @@ with tab2:
 
     settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
     usd = settings["usd"]
+    text_color = settings["text_color"]
     new_usd = st.number_input("USD → UAH",value=float(usd))
 
     if st.button("Зберегти курс"):
