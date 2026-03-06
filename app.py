@@ -13,6 +13,7 @@ conn = get_conn()
 ASSETS_DIR = Path("assets")
 BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
 BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
+DASHBOARD_URL = "http://localhost:8500"
 
 
 def list_background_files():
@@ -35,6 +36,8 @@ def get_background_path(filename):
     return "background.png"
 
 st.set_page_config(layout="wide")
+st.link_button("⬅ Назад до панелі менеджера", DASHBOARD_URL)
+st.divider()
 st.title("💍 Кошторис обручок")
 
 tab1, tab2 = st.tabs(["Менеджер","Адмін"])
