@@ -36,10 +36,7 @@ def get_background_path(filename):
     return "background.png"
 
 st.set_page_config(layout="wide")
-st.markdown(
-    f'<a href="{DASHBOARD_URL}" target="_self" style="display:inline-block;padding:0.5rem 0.75rem;border:1px solid rgba(49, 51, 63, 0.2);border-radius:0.5rem;text-decoration:none;">⬅ Назад до панелі менеджера</a>',
-    unsafe_allow_html=True,
-)
+st.link_button("⬅ Назад до панелі менеджера", DASHBOARD_URL)
 st.divider()
 st.title("💍 Кошторис обручок")
 
