@@ -13,7 +13,7 @@ conn = get_conn()
 ASSETS_DIR = Path("assets")
 BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
 BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
-DASHBOARD_URL = "http://localhost:8500"
+DASHBOARD_URL = "https://panel-for-manager-call.streamlit.app/"
 
 
 def list_background_files():
