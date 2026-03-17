@@ -9,6 +9,8 @@ from PIL import Image
 from pathlib import Path
 import tempfile
 
+import importlib
+
 BASE_DIR = Path(__file__).resolve().parent
 
 
@@ -353,3 +355,19 @@ def generate_pdf(data, out="final.pdf"):
     doc.build(elements, onFirstPage=draw_first_page)
 
     return out
+
+
+def convert_pdf_to_jpg(pdf_path, out="final.jpg", quality=95, scale=3):
+    """Convert the first page of a PDF into JPG."""
+    try:
+        pdfium = importlib.import_module("pypdfium2")
+        pdf = pdfium.PdfDocument(pdf_path)
+        page = pdf[0]
+        bitmap = page.render(scale=scale)
+        image = bitmap.to_pil().convert("RGB")
+        image.save(out, format="JPEG", quality=quality)
+        page.close()
+        pdf.close()
+        return out
+    except Exception:
+        return None

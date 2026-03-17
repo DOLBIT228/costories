@@ -4,7 +4,7 @@ import requests
 from pathlib import Path
 import shutil
 from database import get_conn, init_db, STONE_SIZES, STONE_TYPES, normalize_text_color
-from pdf_engine import generate_pdf
+from pdf_engine import convert_pdf_to_jpg, generate_pdf
 
 
 init_db()
@@ -375,4 +375,11 @@ with tab1:
         out = generate_pdf(data)
 
         with open(out,"rb") as f:
-            st.download_button("⬇️ Завантажити PDF",f,file_name="koshtorys.pdf")
+            st.download_button("⬇️ Завантажити PDF",f,file_name="koshtorys.pdf", mime="application/pdf")
+
+        jpg_out = convert_pdf_to_jpg(out)
+        if jpg_out:
+            with open(jpg_out, "rb") as f:
+                st.download_button("🖼️ Завантажити JPG", f, file_name="koshtorys.jpg", mime="image/jpeg")
+        else:
+            st.warning("Не вдалося сформувати JPG у цьому середовищі. PDF доступний для завантаження.")

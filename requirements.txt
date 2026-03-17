@@ -3,3 +3,4 @@ reportlab
 pypdf
 pillow
 pandas
+pypdfium2
