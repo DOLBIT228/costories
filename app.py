@@ -328,7 +328,7 @@ with tab1:
         placeholder="Наприклад: WG-2026-015",
     )
 
-    if st.button("📄 Згенерувати PDF"):
+    if st.button("📄 Згенерувати PDF/JPG"):
         latest_settings = pd.read_sql("SELECT background_file, text_color FROM settings WHERE id=1", conn).iloc[0]
         background_file = latest_settings["background_file"]
         background_path = get_background_path(background_file)
