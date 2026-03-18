@@ -9,7 +9,7 @@ STONE_SIZES = [
     "6.00","6.50","7.00","7.50","8.00"
 ]
 
-STONE_TYPES = ["diamond","cvd","moissanite","zircon"]
+STONE_TYPES = ["Діамант","CVD","муасаніт","цирконій"]
 
 FIXED_METALS = [
     "Срібло 925",
