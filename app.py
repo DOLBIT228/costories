@@ -14,56 +14,6 @@ ASSETS_DIR = Path("assets")
 BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
 BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
 DASHBOARD_URL = "https://panel-for-manager-call.streamlit.app/"
-ROLE_MANAGER = "manager"
-ROLE_ADMIN = "admin"
-
-
-def get_auth_accounts():
-    auth = st.secrets.get("auth", {})
-    accounts = {
-        ROLE_MANAGER: {
-            "username": auth.get("manager_username", "manager"),
-            "password": auth.get("manager_password"),
-        },
-        ROLE_ADMIN: {
-            "username": auth.get("admin_username", "admin"),
-            "password": auth.get("admin_password"),
-        },
-    }
-    return accounts
-
-
-def ensure_authenticated():
-    accounts = get_auth_accounts()
-
-    if not accounts[ROLE_MANAGER]["password"] or not accounts[ROLE_ADMIN]["password"]:
-        st.error(
-            "Налаштуйте доступ у Streamlit secrets: auth.manager_password та auth.admin_password."
-        )
-        st.stop()
-
-    if "role" not in st.session_state:
-        st.session_state.role = None
-
-    if st.session_state.role:
-        return
-
-    st.title("🔐 Вхід до кошторису")
-    st.caption("Менеджер має доступ до вкладки 'Менеджер', адміністратор — до 'Менеджер' + 'Адмін'.")
-
-    with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("Логін")
-        password = st.text_input("Пароль", type="password")
-        submitted = st.form_submit_button("Увійти")
-
-    if submitted:
-        for role, account in accounts.items():
-            if username == account["username"] and password == account["password"]:
-                st.session_state.role = role
-                st.rerun()
-        st.error("Невірний логін або пароль.")
-
-    st.stop()
 
 
 def list_background_files():
@@ -86,24 +36,15 @@ def get_background_path(filename):
     return "background.png"
 
 st.set_page_config(layout="wide")
-ensure_authenticated()
 st.link_button("⬅ Назад до панелі менеджера", DASHBOARD_URL)
 st.divider()
 st.title("💍 Кошторис обручок")
 
-if st.sidebar.button("Вийти"):
-    st.session_state.role = None
-    st.rerun()
-
-can_access_admin = st.session_state.role == ROLE_ADMIN
-st.sidebar.markdown(f"**Роль:** {'Адміністратор' if can_access_admin else 'Менеджер'}")
-
-tabs = st.tabs(["Менеджер", "Адмін"] if can_access_admin else ["Менеджер"])
-tab1 = tabs[0]
-tab2 = tabs[1] if can_access_admin else None
+tab1, tab2 = st.tabs(["Менеджер","Адмін"])
 
 # ================= ADMIN =================
-def render_admin_tab():
+with tab2:
+
     st.header("Адмін панель")
 
     def editable_table(title, table):
@@ -120,30 +61,31 @@ def render_admin_tab():
             conn.commit()
             st.success("Збережено")
 
-    editable_table("Метали ₴/г", "metals")
-    editable_table("Робота ювеліра ₴/г", "jeweler")
-    editable_table("Каміння (USD матриця)", "stones")
-    editable_table("Профілі", "profiles")
-    editable_table("Гравіювання", "engravings")
-    editable_table("Покриття", "coatings")
+    editable_table("Метали ₴/г","metals")
+    editable_table("Робота ювеліра ₴/г","jeweler")
+    editable_table("Каміння (USD матриця)","stones")
+    editable_table("Профілі","profiles")
+    editable_table("Гравіювання","engravings")
+    editable_table("Покриття","coatings")
 
     st.subheader("Курс USD")
 
-    settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1", conn).iloc[0]
+    settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
     usd = settings["usd"]
     text_color = settings["text_color"]
-    new_usd = st.number_input("USD → UAH", value=float(usd))
+    new_usd = st.number_input("USD → UAH",value=float(usd))
 
     if st.button("Зберегти курс"):
-        conn.execute("UPDATE settings SET usd=? WHERE id=1", (new_usd,))
+        conn.execute("UPDATE settings SET usd=? WHERE id=1",(new_usd,))
         conn.commit()
 
     if st.button("Оновити з НБУ"):
         r = requests.get("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=USD&json")
         rate = r.json()[0]["rate"]
-        conn.execute("UPDATE settings SET usd=? WHERE id=1", (rate,))
+        conn.execute("UPDATE settings SET usd=? WHERE id=1",(rate,))
         conn.commit()
         st.success(f"Оновлено: {rate}")
+
 
     st.subheader("Колір тексту та ліній у PDF")
     new_text_color = st.text_input(
@@ -200,11 +142,6 @@ def render_admin_tab():
         conn.execute("UPDATE settings SET background_file=? WHERE id=1", (selected_background,))
         conn.commit()
         st.success(f"Активний фон: {selected_background}")
-
-
-if tab2 is not None:
-    with tab2:
-        render_admin_tab()
 
 # ================= MANAGER =================
 with tab1:
