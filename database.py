@@ -19,7 +19,7 @@ FIXED_METALS = [
     "Платина 950"
 ]
 
-JEWELER_TYPES = ["platinum","premium","premium_plus"]
+JEWELER_TYPES = ["Платина","Преміум","Преміум+"]
 DEFAULT_TEXT_COLOR = "#000000"
 DEFAULT_BACKGROUND_FILE = "full_white.png"
 
