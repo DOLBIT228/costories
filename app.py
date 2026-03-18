@@ -47,126 +47,179 @@ st.link_button("⬅ Назад до панелі менеджера", DASHBOARD_
 st.divider()
 st.title("💍 Кошторис обручок")
 
-tab1, tab2 = st.tabs(["Менеджер","Адмін"])
+auth_config = st.secrets.get("auth", {})
+
+
+def get_user_role(username: str, password: str):
+    manager_username = auth_config.get("manager_username")
+    manager_password = auth_config.get("manager_password")
+    admin_username = auth_config.get("admin_username")
+    admin_password = auth_config.get("admin_password")
+
+    if username == admin_username and password == admin_password:
+        return "admin"
+    if username == manager_username and password == manager_password:
+        return "manager"
+
+    return None
+
+
+if "auth_role" not in st.session_state:
+    st.session_state.auth_role = None
+
+if st.session_state.auth_role is None:
+    st.subheader("🔐 Панель входу")
+    with st.form("login_form", clear_on_submit=False):
+        username = st.text_input("Логін")
+        password = st.text_input("Пароль", type="password")
+        submitted = st.form_submit_button("Увійти")
+
+    if submitted:
+        role = get_user_role(username.strip(), password)
+        if role:
+            st.session_state.auth_role = role
+            st.success("Вхід виконано успішно.")
+            st.rerun()
+        else:
+            st.error("Невірний логін або пароль.")
+
+    st.stop()
+
+user_role = st.session_state.auth_role
+
+header_col, action_col = st.columns([4, 1])
+with header_col:
+    st.caption(f"Роль: {'Адміністратор' if user_role == 'admin' else 'Менеджер'}")
+with action_col:
+    if st.button("Вийти"):
+        st.session_state.auth_role = None
+        st.rerun()
+
+if user_role == "admin":
+    tab1, tab2 = st.tabs(["Менеджер", "Адмін"])
+else:
+    tab1 = st.tabs(["Менеджер"])[0]
+    tab2 = None
 
 # ================= ADMIN =================
-with tab2:
+if tab2 is not None:
+    with tab2:
 
-    st.header("Адмін панель")
+        st.header("Адмін панель")
 
-    def editable_table(title, table):
-        st.subheader(title)
-        df = pd.read_sql(f"SELECT * FROM {table}", conn)
-        display_df = df.copy()
-        display_to_db_column_map = None
+        def editable_table(title, table):
+            st.subheader(title)
+            df = pd.read_sql(f"SELECT * FROM {table}", conn)
+            display_df = df.copy()
+            display_to_db_column_map = None
 
-        if table == "stones":
-            display_to_db_column_map = {
-                "Розмір": "size",
-                "Діамант": "diamond",
-                "CVD": "cvd",
-                "Муассаніт": "moissanite",
-                "Цирконій": "zircon",
-            }
-            display_df = display_df.rename(
-                columns={db_col: display_col for display_col, db_col in display_to_db_column_map.items()}
-            )
-
-        edited = st.data_editor(display_df, use_container_width=True, num_rows="fixed")
-        if st.button(f"Зберегти {table}"):
-            if display_to_db_column_map:
-                edited = edited.rename(columns=display_to_db_column_map)
-
-            for _, r in edited.iterrows():
-                cols = ",".join([f"{c}=?" for c in df.columns[1:]])
-                conn.execute(
-                    f"UPDATE {table} SET {cols} WHERE {df.columns[0]}=?",
-                    list(r[1:]) + [r[0]]
+            if table == "stones":
+                display_to_db_column_map = {
+                    "Розмір": "size",
+                    "Діамант": "diamond",
+                    "CVD": "cvd",
+                    "Муассаніт": "moissanite",
+                    "Цирконій": "zircon",
+                }
+                display_df = display_df.rename(
+                    columns={db_col: display_col for display_col, db_col in display_to_db_column_map.items()}
                 )
+
+            edited = st.data_editor(display_df, use_container_width=True, num_rows="fixed")
+            if st.button(f"Зберегти {table}"):
+                if display_to_db_column_map:
+                    edited = edited.rename(columns=display_to_db_column_map)
+
+                for _, r in edited.iterrows():
+                    cols = ",".join([f"{c}=?" for c in df.columns[1:]])
+                    conn.execute(
+                        f"UPDATE {table} SET {cols} WHERE {df.columns[0]}=?",
+                        list(r[1:]) + [r[0]]
+                    )
+                conn.commit()
+                st.success("Збережено")
+
+        editable_table("Метали ₴/г","metals")
+        editable_table("Робота ювеліра ₴/г","jeweler")
+        editable_table("Каміння (USD матриця)","stones")
+        editable_table("Профілі","profiles")
+        editable_table("Гравіювання","engravings")
+        editable_table("Покриття","coatings")
+
+        st.subheader("Курс USD")
+
+        settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
+        usd = settings["usd"]
+        text_color = settings["text_color"]
+        new_usd = st.number_input("USD → UAH",value=float(usd))
+
+        if st.button("Зберегти курс"):
+            conn.execute("UPDATE settings SET usd=? WHERE id=1",(new_usd,))
             conn.commit()
-            st.success("Збережено")
 
-    editable_table("Метали ₴/г","metals")
-    editable_table("Робота ювеліра ₴/г","jeweler")
-    editable_table("Каміння (USD матриця)","stones")
-    editable_table("Профілі","profiles")
-    editable_table("Гравіювання","engravings")
-    editable_table("Покриття","coatings")
-
-    st.subheader("Курс USD")
-
-    settings = pd.read_sql("SELECT usd, background_file, text_color FROM settings WHERE id=1",conn).iloc[0]
-    usd = settings["usd"]
-    text_color = settings["text_color"]
-    new_usd = st.number_input("USD → UAH",value=float(usd))
-
-    if st.button("Зберегти курс"):
-        conn.execute("UPDATE settings SET usd=? WHERE id=1",(new_usd,))
-        conn.commit()
-
-    if st.button("Оновити з НБУ"):
-        r = requests.get("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=USD&json")
-        rate = r.json()[0]["rate"]
-        conn.execute("UPDATE settings SET usd=? WHERE id=1",(rate,))
-        conn.commit()
-        st.success(f"Оновлено: {rate}")
-
-
-    st.subheader("Колір тексту та ліній у PDF")
-    new_text_color = st.text_input(
-        "Колір у форматі HEX (#rgb або #rrggbb)",
-        value=text_color,
-        max_chars=7,
-        help="Наприклад: #fff, #000, #c4a, #ffffff, #1f2937",
-    )
-
-    if st.button("Зберегти колір"):
-        normalized_color = normalize_text_color(new_text_color)
-        if normalized_color != new_text_color.strip().lower():
-            st.error("Некоректний формат. Використовуйте HEX: #rgb або #rrggbb (наприклад #fff чи #ffffff).")
-        else:
-            conn.execute("UPDATE settings SET text_color=? WHERE id=1", (normalized_color,))
+        if st.button("Оновити з НБУ"):
+            r = requests.get("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=USD&json")
+            rate = r.json()[0]["rate"]
+            conn.execute("UPDATE settings SET usd=? WHERE id=1",(rate,))
             conn.commit()
-            st.success(f"Колір оновлено: {normalized_color}")
+            st.success(f"Оновлено: {rate}")
 
-    st.subheader("Фони для PDF")
 
-    uploaded_backgrounds = st.file_uploader(
-        "Завантажити фони (PNG/JPG)",
-        type=["png", "jpg", "jpeg"],
-        accept_multiple_files=True,
-        key="background_uploads",
-    )
+        st.subheader("Колір тексту та ліній у PDF")
+        new_text_color = st.text_input(
+            "Колір у форматі HEX (#rgb або #rrggbb)",
+            value=text_color,
+            max_chars=7,
+            help="Наприклад: #fff, #000, #c4a, #ffffff, #1f2937",
+        )
 
-    if st.button("Зберегти фони"):
-        if uploaded_backgrounds:
-            saved = 0
-            for bg in uploaded_backgrounds:
-                safe_name = Path(bg.name).name
-                target = BACKGROUNDS_DIR / safe_name
-                with target.open("wb") as f:
-                    shutil.copyfileobj(bg, f)
-                saved += 1
-            st.success(f"Збережено фонів: {saved}")
-        else:
-            st.info("Спочатку оберіть хоча б один файл.")
+        if st.button("Зберегти колір"):
+            normalized_color = normalize_text_color(new_text_color)
+            if normalized_color != new_text_color.strip().lower():
+                st.error("Некоректний формат. Використовуйте HEX: #rgb або #rrggbb (наприклад #fff чи #ffffff).")
+            else:
+                conn.execute("UPDATE settings SET text_color=? WHERE id=1", (normalized_color,))
+                conn.commit()
+                st.success(f"Колір оновлено: {normalized_color}")
 
-    backgrounds = list_background_files()
-    current_background = pd.read_sql("SELECT background_file FROM settings WHERE id=1", conn).iloc[0]["background_file"]
-    if current_background not in backgrounds:
-        current_background = backgrounds[0] if backgrounds else "full_white.png"
+        st.subheader("Фони для PDF")
 
-    selected_background = st.selectbox(
-        "Фон для формування PDF",
-        options=backgrounds if backgrounds else ["full_white.png"],
-        index=(backgrounds.index(current_background) if backgrounds else 0),
-        key="selected_background",
-    )
+        uploaded_backgrounds = st.file_uploader(
+            "Завантажити фони (PNG/JPG)",
+            type=["png", "jpg", "jpeg"],
+            accept_multiple_files=True,
+            key="background_uploads",
+        )
 
-    if st.button("Зберегти фон для PDF"):
-        conn.execute("UPDATE settings SET background_file=? WHERE id=1", (selected_background,))
-        conn.commit()
-        st.success(f"Активний фон: {selected_background}")
+        if st.button("Зберегти фони"):
+            if uploaded_backgrounds:
+                saved = 0
+                for bg in uploaded_backgrounds:
+                    safe_name = Path(bg.name).name
+                    target = BACKGROUNDS_DIR / safe_name
+                    with target.open("wb") as f:
+                        shutil.copyfileobj(bg, f)
+                    saved += 1
+                st.success(f"Збережено фонів: {saved}")
+            else:
+                st.info("Спочатку оберіть хоча б один файл.")
+
+        backgrounds = list_background_files()
+        current_background = pd.read_sql("SELECT background_file FROM settings WHERE id=1", conn).iloc[0]["background_file"]
+        if current_background not in backgrounds:
+            current_background = backgrounds[0] if backgrounds else "full_white.png"
+
+        selected_background = st.selectbox(
+            "Фон для формування PDF",
+            options=backgrounds if backgrounds else ["full_white.png"],
+            index=(backgrounds.index(current_background) if backgrounds else 0),
+            key="selected_background",
+        )
+
+        if st.button("Зберегти фон для PDF"):
+            conn.execute("UPDATE settings SET background_file=? WHERE id=1", (selected_background,))
+            conn.commit()
+            st.success(f"Активний фон: {selected_background}")
 
 # ================= MANAGER =================
 with tab1:
