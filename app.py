@@ -3,7 +3,14 @@ import pandas as pd
 import requests
 from pathlib import Path
 import shutil
-from database import get_conn, init_db, STONE_SIZES, STONE_TYPES, normalize_text_color
+from database import (
+    get_conn,
+    init_db,
+    STONE_SIZES,
+    STONE_TYPES,
+    STONE_TYPE_TO_COLUMN,
+    normalize_text_color,
+)
 from pdf_engine import convert_pdf_to_jpg, generate_pdf
 
 
@@ -50,8 +57,26 @@ with tab2:
     def editable_table(title, table):
         st.subheader(title)
         df = pd.read_sql(f"SELECT * FROM {table}", conn)
-        edited = st.data_editor(df, use_container_width=True, num_rows="fixed")
+        display_df = df.copy()
+        display_to_db_column_map = None
+
+        if table == "stones":
+            display_to_db_column_map = {
+                "Розмір": "size",
+                "Діамант": "diamond",
+                "CVD": "cvd",
+                "Муассаніт": "moissanite",
+                "Цирконій": "zircon",
+            }
+            display_df = display_df.rename(
+                columns={db_col: display_col for display_col, db_col in display_to_db_column_map.items()}
+            )
+
+        edited = st.data_editor(display_df, use_container_width=True, num_rows="fixed")
         if st.button(f"Зберегти {table}"):
+            if display_to_db_column_map:
+                edited = edited.rename(columns=display_to_db_column_map)
+
             for _, r in edited.iterrows():
                 cols = ",".join([f"{c}=?" for c in df.columns[1:]])
                 conn.execute(
@@ -246,7 +271,8 @@ with tab1:
             sz = st.selectbox("Розмір",STONE_SIZES,key=f"{prefix}ks")
             q = st.number_input("Кількість",0,key=f"{prefix}kq")
 
-            usd_price = stones[stones["size"]==sz][t].values[0]
+            stone_column = STONE_TYPE_TO_COLUMN[t]
+            usd_price = stones[stones["size"]==sz][stone_column].values[0]
             stone_price = float(usd_price * usd)
             total += add_row("Каміння", f"{t} {sz}мм", stone_price, q, 0.0, "шт")
             stones_txt = f"{t} {sz}мм x{q}"

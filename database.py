@@ -9,7 +9,13 @@ STONE_SIZES = [
     "6.00","6.50","7.00","7.50","8.00"
 ]
 
-STONE_TYPES = ["Діамант","CVD","муасаніт","цирконій"]
+STONE_TYPE_TO_COLUMN = {
+    "Діамант": "diamond",
+    "CVD": "cvd",
+    "Муассаніт": "moissanite",
+    "Цирконій": "zircon",
+}
+STONE_TYPES = list(STONE_TYPE_TO_COLUMN.keys())
 
 FIXED_METALS = [
     "Срібло 925",
@@ -57,6 +63,22 @@ def init_db():
         price REAL DEFAULT 0
     )
     """)
+
+    jeweler_type_aliases = {
+        "platinum": "Платина",
+        "premium": "Преміум",
+        "premium_plus": "Преміум+",
+    }
+    for old_type, new_type in jeweler_type_aliases.items():
+        existing = cur.execute("SELECT price FROM jeweler WHERE type=?", (old_type,)).fetchone()
+        if existing:
+            existing_new = cur.execute("SELECT price FROM jeweler WHERE type=?", (new_type,)).fetchone()
+            if not existing_new:
+                cur.execute("INSERT INTO jeweler(type, price) VALUES(?, ?)", (new_type, existing[0]))
+            elif existing_new[0] == 0 and existing[0] != 0:
+                cur.execute("UPDATE jeweler SET price=? WHERE type=?", (existing[0], new_type))
+            cur.execute("DELETE FROM jeweler WHERE type=?", (old_type,))
+
     for t in JEWELER_TYPES:
         cur.execute("INSERT OR IGNORE INTO jeweler VALUES(?,0)", (t,))
 
