@@ -358,9 +358,9 @@ with tab1:
             base = unit_price * qty
 
             if discount_type == "per_unit":
-                discounted_unit_price = max(unit_price - discount, 0)
-                final = discounted_unit_price * qty
-                discount_label = f"-{discount:.0f} ₴/{unit}"
+                # "Знижка на метали ₴/г" застосовується лише до 1 грама металу.
+                final = max(base - discount, 0)
+                discount_label = f"-{discount:.0f} ₴ (1 {unit})"
             else:
                 final = base * (1 - discount / 100)
                 discount_label = f"{discount:.0f}%"
