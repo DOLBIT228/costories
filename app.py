@@ -3,6 +3,11 @@ import pandas as pd
 import requests
 from pathlib import Path
 import shutil
+import base64
+import hashlib
+import hmac
+import json
+import time
 from database import (
     get_conn,
     init_db,
@@ -21,6 +26,59 @@ ASSETS_DIR = Path("assets")
 BACKGROUNDS_DIR = ASSETS_DIR / "backgrounds"
 BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
 DASHBOARD_URL = "https://panel-for-manager-call.streamlit.app/"
+
+
+auth_config = st.secrets.get("auth", {})
+SESSION_DURATION_HOURS = int(auth_config.get("session_duration_hours", 12))
+
+
+def _auth_signing_secret() -> str:
+    explicit_secret = auth_config.get("session_secret")
+    if explicit_secret:
+        return str(explicit_secret)
+
+    manager_password = auth_config.get("manager_password", "")
+    admin_password = auth_config.get("admin_password", "")
+    return f"{manager_password}|{admin_password}|costories"
+
+
+def _make_auth_token(role: str, issued_at: int | None = None) -> str:
+    issued_at = issued_at or int(time.time())
+    payload = {"role": role, "iat": issued_at, "exp": issued_at + SESSION_DURATION_HOURS * 3600}
+    raw_payload = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    payload_b64 = base64.urlsafe_b64encode(raw_payload).decode("utf-8").rstrip("=")
+    signature = hmac.new(
+        _auth_signing_secret().encode("utf-8"), payload_b64.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    return f"{payload_b64}.{signature}"
+
+
+def _restore_role_from_token(token: str | None) -> str | None:
+    if not token or "." not in token:
+        return None
+
+    payload_b64, provided_signature = token.rsplit(".", 1)
+    expected_signature = hmac.new(
+        _auth_signing_secret().encode("utf-8"), payload_b64.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(provided_signature, expected_signature):
+        return None
+
+    padding = "=" * (-len(payload_b64) % 4)
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(payload_b64 + padding).decode("utf-8"))
+    except (ValueError, json.JSONDecodeError):
+        return None
+
+    role = payload.get("role")
+    exp = payload.get("exp")
+    if role not in {"admin", "manager"} or not isinstance(exp, int):
+        return None
+
+    if exp < int(time.time()):
+        return None
+
+    return role
 
 
 def list_background_files():
@@ -47,8 +105,6 @@ st.link_button("⬅ Назад до панелі менеджера", DASHBOARD_
 st.divider()
 st.title("💍 Кошторис обручок")
 
-auth_config = st.secrets.get("auth", {})
-
 
 def get_user_role(username: str, password: str):
     manager_username = auth_config.get("manager_username")
@@ -68,6 +124,11 @@ if "auth_role" not in st.session_state:
     st.session_state.auth_role = None
 
 if st.session_state.auth_role is None:
+    restored_role = _restore_role_from_token(st.query_params.get("auth"))
+    if restored_role:
+        st.session_state.auth_role = restored_role
+
+if st.session_state.auth_role is None:
     st.subheader("🔐 Панель входу")
     with st.form("login_form", clear_on_submit=False):
         username = st.text_input("Логін")
@@ -78,6 +139,7 @@ if st.session_state.auth_role is None:
         role = get_user_role(username.strip(), password)
         if role:
             st.session_state.auth_role = role
+            st.query_params["auth"] = _make_auth_token(role)
             st.success("Вхід виконано успішно.")
             st.rerun()
         else:
@@ -93,6 +155,8 @@ with header_col:
 with action_col:
     if st.button("Вийти"):
         st.session_state.auth_role = None
+        if "auth" in st.query_params:
+            del st.query_params["auth"]
         st.rerun()
 
 if user_role == "admin":
