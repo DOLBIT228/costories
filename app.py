@@ -198,7 +198,7 @@ if tab2 is not None:
                     cols = ",".join([f"{c}=?" for c in df.columns[1:]])
                     conn.execute(
                         f"UPDATE {table} SET {cols} WHERE {df.columns[0]}=?",
-                        list(r[1:]) + [r[0]]
+                        list(r.iloc[1:]) + [r.iloc[0]]
                     )
                 conn.commit()
                 st.success("Збережено")
