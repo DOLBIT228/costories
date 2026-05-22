@@ -189,16 +189,34 @@ if tab2 is not None:
                     columns={db_col: display_col for display_col, db_col in display_to_db_column_map.items()}
                 )
 
-            edited = st.data_editor(display_df, use_container_width=True, num_rows="fixed")
+            edited = st.data_editor(
+                display_df,
+                use_container_width=True,
+                num_rows="fixed",
+                disabled=[display_df.columns[0]],
+            )
             if st.button(f"Зберегти {table}"):
                 if display_to_db_column_map:
                     edited = edited.rename(columns=display_to_db_column_map)
 
                 for _, r in edited.iterrows():
+                    db_key = r.iloc[0]
+                    existing_row = df[df[df.columns[0]] == db_key].iloc[0]
+
+                    sanitized_values = []
+                    for col in df.columns[1:]:
+                        new_value = r[col]
+                        old_value = existing_row[col]
+
+                        if pd.isna(new_value):
+                            sanitized_values.append(old_value)
+                        else:
+                            sanitized_values.append(new_value)
+
                     cols = ",".join([f"{c}=?" for c in df.columns[1:]])
                     conn.execute(
                         f"UPDATE {table} SET {cols} WHERE {df.columns[0]}=?",
-                        list(r.iloc[1:]) + [r.iloc[0]]
+                        sanitized_values + [db_key]
                     )
                 conn.commit()
                 st.success("Збережено")
