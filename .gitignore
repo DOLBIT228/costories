@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.streamlit/secrets.toml
+.DS_Store
+data.db-wal
+data.db-shm

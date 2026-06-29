@@ -1,0 +1,225 @@
+{
+  "metals": [
+    {
+      "name": "Золото 375",
+      "price": 2970.0
+    },
+    {
+      "name": "Золото 585",
+      "price": 4630.0
+    },
+    {
+      "name": "Золото 750",
+      "price": 5935.0
+    },
+    {
+      "name": "Платина 950",
+      "price": 4170.0
+    },
+    {
+      "name": "Срібло 925",
+      "price": 145.0
+    }
+  ],
+  "jeweler": [
+    {
+      "type": "Платина",
+      "price": 5149.0
+    },
+    {
+      "type": "Преміум",
+      "price": 3285.0
+    },
+    {
+      "type": "Преміум+",
+      "price": 4366.0
+    }
+  ],
+  "stones": [
+    {
+      "size": "1.00",
+      "diamond": 18.85,
+      "cvd": 14.95,
+      "moissanite": 7.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "1.25",
+      "diamond": 24.7,
+      "cvd": 18.2,
+      "moissanite": 8.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "1.50",
+      "diamond": 34.45,
+      "cvd": 23.4,
+      "moissanite": 9.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "1.75",
+      "diamond": 46.15,
+      "cvd": 30.55,
+      "moissanite": 9.5,
+      "zircon": 0.0
+    },
+    {
+      "size": "2.00",
+      "diamond": 64.35,
+      "cvd": 46.8,
+      "moissanite": 11.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "2.25",
+      "diamond": 70.0,
+      "cvd": 49.0,
+      "moissanite": 12.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "2.50",
+      "diamond": 95.0,
+      "cvd": 66.5,
+      "moissanite": 15.5,
+      "zircon": 0.0
+    },
+    {
+      "size": "2.75",
+      "diamond": 130.0,
+      "cvd": 91.0,
+      "moissanite": 17.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "3.00",
+      "diamond": 180.0,
+      "cvd": 126.0,
+      "moissanite": 20.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "3.50",
+      "diamond": 550.0,
+      "cvd": 350.0,
+      "moissanite": 36.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "3.80",
+      "diamond": 850.0,
+      "cvd": 570.0,
+      "moissanite": 0.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "4.00",
+      "diamond": 975.0,
+      "cvd": 665.0,
+      "moissanite": 4000.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "4.30",
+      "diamond": 1200.0,
+      "cvd": 785.0,
+      "moissanite": 4500.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "4.50",
+      "diamond": 1675.0,
+      "cvd": 1095.0,
+      "moissanite": 5200.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "5.00",
+      "diamond": 2750.0,
+      "cvd": 1400.0,
+      "moissanite": 6000.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "5.50",
+      "diamond": 1752.5,
+      "cvd": 1750.0,
+      "moissanite": 6500.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "6.00",
+      "diamond": 5250.0,
+      "cvd": 2400.0,
+      "moissanite": 7000.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "6.50",
+      "diamond": 5500.0,
+      "cvd": 2800.0,
+      "moissanite": 7500.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "7.00",
+      "diamond": 0.0,
+      "cvd": 0.0,
+      "moissanite": 8000.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "7.50",
+      "diamond": 0.0,
+      "cvd": 0.0,
+      "moissanite": 9000.0,
+      "zircon": 0.0
+    },
+    {
+      "size": "8.00",
+      "diamond": 0.0,
+      "cvd": 0.0,
+      "moissanite": 10000.0,
+      "zircon": 0.0
+    }
+  ],
+  "profiles": [
+    {
+      "name": "Comfort fit",
+      "price": 1500.0
+    },
+    {
+      "name": "Стандартний",
+      "price": 0.0
+    }
+  ],
+  "engravings": [
+    {
+      "name": "Просте",
+      "price": 100.0
+    },
+    {
+      "name": "Складне",
+      "price": 300.0
+    }
+  ],
+  "coatings": [
+    {
+      "name": "Родій",
+      "price": 1500.0
+    },
+    {
+      "name": "Рутеній",
+      "price": 3000.0
+    }
+  ],
+  "settings": [
+    {
+      "id": 1,
+      "usd": 43.2982,
+      "background_file": "full_white.png",
+      "text_color": "#000000"
+    }
+  ]
+}

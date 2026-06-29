@@ -4,3 +4,4 @@ pypdf
 pillow
 pandas
 pypdfium2
+requests

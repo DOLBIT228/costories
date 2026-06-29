@@ -1,7 +1,12 @@
 import sqlite3
 import re
+import json
+import os
+from pathlib import Path
 
-DB = "data.db"
+BASE_DIR = Path(__file__).resolve().parent
+DB = BASE_DIR / "data.db"
+BACKUP_FILE = BASE_DIR / "data_backup.json"
 
 STONE_SIZES = [
     "1.00","1.25","1.50","1.75","2.00","2.25","2.50","2.75",
@@ -29,6 +34,16 @@ JEWELER_TYPES = ["Платина","Преміум","Преміум+"]
 DEFAULT_TEXT_COLOR = "#000000"
 DEFAULT_BACKGROUND_FILE = "full_white.png"
 
+BACKUP_TABLES = {
+    "metals": ("name", ["price"]),
+    "jeweler": ("type", ["price"]),
+    "stones": ("size", ["diamond", "cvd", "moissanite", "zircon"]),
+    "profiles": ("name", ["price"]),
+    "engravings": ("name", ["price"]),
+    "coatings": ("name", ["price"]),
+    "settings": ("id", ["usd", "background_file", "text_color"]),
+}
+
 
 def normalize_text_color(value):
     if isinstance(value, str) and re.fullmatch(r"#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?", value.strip()):
@@ -42,7 +57,85 @@ def normalize_background_file(value):
     return DEFAULT_BACKGROUND_FILE
 
 def get_conn():
-    return sqlite3.connect(DB, check_same_thread=False)
+    conn = sqlite3.connect(str(DB), check_same_thread=False)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    return conn
+
+
+def build_database_backup(conn):
+    backup = {}
+    for table, (key_col, value_cols) in BACKUP_TABLES.items():
+        columns = [key_col] + value_cols
+        rows = conn.execute(
+            f"SELECT {', '.join(columns)} FROM {table} ORDER BY {key_col}"
+        ).fetchall()
+        backup[table] = [dict(zip(columns, row)) for row in rows]
+    return backup
+
+
+def write_backup_file(backup):
+    tmp_file = BACKUP_FILE.with_suffix(".tmp")
+    with tmp_file.open("w", encoding="utf-8") as f:
+        json.dump(backup, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_file, BACKUP_FILE)
+
+
+def backup_database(conn=None):
+    close_conn = conn is None
+    if conn is None:
+        conn = get_conn()
+
+    backup = build_database_backup(conn)
+    write_backup_file(backup)
+
+    if close_conn:
+        conn.close()
+
+    return backup
+
+
+def apply_backup_data(conn, backup):
+    if not isinstance(backup, dict):
+        return False
+
+    for table, (key_col, value_cols) in BACKUP_TABLES.items():
+        rows = backup.get(table, [])
+        if not isinstance(rows, list):
+            continue
+
+        for row in rows:
+            if not isinstance(row, dict) or key_col not in row:
+                continue
+
+            columns = [key_col] + value_cols
+            values = [row.get(col) for col in columns]
+            placeholders = ", ".join(["?"] * len(columns))
+            update_cols = ", ".join([f"{col}=excluded.{col}" for col in value_cols])
+            conn.execute(
+                f"""
+                INSERT INTO {table} ({', '.join(columns)})
+                VALUES ({placeholders})
+                ON CONFLICT({key_col}) DO UPDATE SET {update_cols}
+                """,
+                values,
+            )
+
+    conn.commit()
+    return True
+
+
+def restore_database_from_backup(conn):
+    if not BACKUP_FILE.exists():
+        return False
+
+    try:
+        with BACKUP_FILE.open("r", encoding="utf-8") as f:
+            backup = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return False
+
+    return apply_backup_data(conn, backup)
 
 def init_db():
     conn = get_conn()
@@ -142,4 +235,5 @@ def init_db():
     cur.execute("INSERT OR IGNORE INTO coatings VALUES('Рутеній',0)")
 
     conn.commit()
+    restore_database_from_backup(conn)
     conn.close()

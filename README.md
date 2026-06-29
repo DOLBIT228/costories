@@ -116,9 +116,18 @@ manager_username = "manager"
 manager_password = "strong_manager_password"
 session_duration_hours = 12
 # session_secret = "optional_extra_secret"
+
+[backup]
+# Опційно, але рекомендовано для Streamlit Cloud.
+# Зберігає прайси у GitHub-файл, щоб вони не злітали після сну/рестарту застосунку.
+github_token = "github_pat_or_token_with_contents_write"
+github_repo = "owner/repository"
+github_path = "costories/data_backup.json"
+github_branch = "main"
 ```
 
 > Якщо `session_secret` не вказаний, підпис токена формується з паролів admin/manager.
+> Секція `[backup]` не обов'язкова для локального запуску. Для Streamlit Cloud токену GitHub потрібен доступ `Contents: Read and write` до репозиторію, де лежить backup-файл.
 
 ### 3) Запуск
 
@@ -226,6 +235,8 @@ streamlit run app.py
 ## Практичні поради з експлуатації
 
 - Зберігайте `data.db` у резервній копії (особливо перед оновленнями).
+- Після збереження цін в адмінці застосунок автоматично оновлює `data_backup.json`; не видаляйте цей файл, бо з нього можна відновити довідники, якщо SQLite-файл буде пересозданий.
+- На Streamlit Cloud та інших хостингах з тимчасовою файловою системою локальний SQLite може скидатися після рестарту контейнера. Щоб прайси переживали сон застосунку, налаштуйте секцію `[backup]` у Streamlit Secrets.
 - Для продакшену використовуйте надійні паролі у `secrets.toml`.
 - Якщо шрифти `e-Ukraine` недоступні, система пробує `Montserrat` як fallback.
 - Підготуйте декілька фірмових фонів у `assets/backgrounds`, щоб швидко перемикати стиль КП.

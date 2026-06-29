@@ -9,12 +9,15 @@ import hmac
 import json
 import time
 from database import (
+    apply_backup_data,
+    backup_database,
     get_conn,
     init_db,
     STONE_SIZES,
     STONE_TYPES,
     STONE_TYPE_TO_COLUMN,
     normalize_text_color,
+    write_backup_file,
 )
 from pdf_engine import convert_pdf_to_jpg, generate_pdf
 
@@ -29,7 +32,139 @@ DASHBOARD_URL = "https://panel-for-manager-call.streamlit.app/"
 
 
 auth_config = st.secrets.get("auth", {})
+backup_config = st.secrets.get("backup", {})
 SESSION_DURATION_HOURS = int(auth_config.get("session_duration_hours", 12))
+
+
+def _github_backup_is_enabled():
+    return all(
+        backup_config.get(key)
+        for key in ("github_token", "github_repo", "github_path")
+    )
+
+
+def _github_backup_headers():
+    return {
+        "Authorization": f"Bearer {backup_config.get('github_token')}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+
+
+def _github_backup_url():
+    repo = str(backup_config.get("github_repo")).strip()
+    path = str(backup_config.get("github_path")).strip().lstrip("/")
+    return f"https://api.github.com/repos/{repo}/contents/{path}"
+
+
+def _download_github_backup():
+    if not _github_backup_is_enabled():
+        return None
+
+    params = {}
+    branch = backup_config.get("github_branch")
+    if branch:
+        params["ref"] = branch
+
+    response = requests.get(
+        _github_backup_url(),
+        headers=_github_backup_headers(),
+        params=params,
+        timeout=10,
+    )
+    if response.status_code == 404:
+        return None
+    response.raise_for_status()
+
+    payload = response.json()
+    content = payload.get("content")
+    if not content:
+        return None
+
+    raw = base64.b64decode(content).decode("utf-8")
+    return json.loads(raw)
+
+
+def _upload_github_backup(backup):
+    if not _github_backup_is_enabled():
+        return False
+
+    url = _github_backup_url()
+    headers = _github_backup_headers()
+    branch = backup_config.get("github_branch")
+
+    params = {}
+    if branch:
+        params["ref"] = branch
+
+    sha = None
+    existing = requests.get(url, headers=headers, params=params, timeout=10)
+    if existing.status_code == 200:
+        sha = existing.json().get("sha")
+    elif existing.status_code != 404:
+        existing.raise_for_status()
+
+    content = json.dumps(backup, ensure_ascii=False, indent=2)
+    body = {
+        "message": "Update CoStories price backup",
+        "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+    }
+    if branch:
+        body["branch"] = branch
+    if sha:
+        body["sha"] = sha
+
+    response = requests.put(url, headers=headers, json=body, timeout=10)
+    response.raise_for_status()
+    return True
+
+
+def restore_remote_backup_on_startup():
+    if st.session_state.get("remote_backup_checked"):
+        return
+
+    st.session_state.remote_backup_checked = True
+    st.session_state.remote_backup_status = "disabled"
+    if not _github_backup_is_enabled():
+        return
+
+    try:
+        backup = _download_github_backup()
+        if backup and apply_backup_data(conn, backup):
+            write_backup_file(backup)
+            st.session_state.remote_backup_status = "restored"
+        else:
+            st.session_state.remote_backup_status = "empty"
+    except Exception as exc:
+        st.session_state.remote_backup_status = f"error: {exc}"
+
+
+def persist_price_backup():
+    backup = backup_database(conn)
+    if not _github_backup_is_enabled():
+        return False
+
+    try:
+        _upload_github_backup(backup)
+        st.session_state.remote_backup_status = "saved"
+        return True
+    except Exception as exc:
+        st.session_state.remote_backup_status = f"error: {exc}"
+        return False
+
+
+def show_remote_backup_status():
+    status = st.session_state.get("remote_backup_status", "disabled")
+    if status == "disabled":
+        st.info("GitHub backup не налаштований. На Streamlit Cloud прайси можуть скидатися після повного рестарту контейнера.")
+    elif status == "restored":
+        st.success("Прайси відновлено із GitHub backup.")
+    elif status == "saved":
+        st.success("GitHub backup оновлено.")
+    elif status == "empty":
+        st.info("GitHub backup налаштований, але файл ще не створено. Він з'явиться після першого збереження в адмінці.")
+    elif str(status).startswith("error:"):
+        st.warning(f"GitHub backup не спрацював: {status.removeprefix('error: ').strip()}")
 
 
 def _auth_signing_secret() -> str:
@@ -101,6 +236,7 @@ def get_background_path(filename):
     return "background.png"
 
 st.set_page_config(layout="wide")
+restore_remote_backup_on_startup()
 st.link_button("⬅ Назад до панелі менеджера", DASHBOARD_URL)
 st.divider()
 st.title("💍 Кошторис обручок")
@@ -170,6 +306,7 @@ if tab2 is not None:
     with tab2:
 
         st.header("Адмін панель")
+        show_remote_backup_status()
 
         def editable_table(title, table):
             st.subheader(title)
@@ -219,6 +356,7 @@ if tab2 is not None:
                         sanitized_values + [db_key]
                     )
                 conn.commit()
+                persist_price_backup()
                 st.success("Збережено")
 
         editable_table("Метали ₴/г","metals")
@@ -238,12 +376,15 @@ if tab2 is not None:
         if st.button("Зберегти курс"):
             conn.execute("UPDATE settings SET usd=? WHERE id=1",(new_usd,))
             conn.commit()
+            persist_price_backup()
+            st.success("Курс збережено")
 
         if st.button("Оновити з НБУ"):
             r = requests.get("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=USD&json")
             rate = r.json()[0]["rate"]
             conn.execute("UPDATE settings SET usd=? WHERE id=1",(rate,))
             conn.commit()
+            persist_price_backup()
             st.success(f"Оновлено: {rate}")
 
 
@@ -262,6 +403,7 @@ if tab2 is not None:
             else:
                 conn.execute("UPDATE settings SET text_color=? WHERE id=1", (normalized_color,))
                 conn.commit()
+                persist_price_backup()
                 st.success(f"Колір оновлено: {normalized_color}")
 
         st.subheader("Фони для PDF")
@@ -301,6 +443,7 @@ if tab2 is not None:
         if st.button("Зберегти фон для PDF"):
             conn.execute("UPDATE settings SET background_file=? WHERE id=1", (selected_background,))
             conn.commit()
+            persist_price_backup()
             st.success(f"Активний фон: {selected_background}")
 
 # ================= MANAGER =================
